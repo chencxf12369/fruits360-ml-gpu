@@ -91,7 +91,7 @@ def main():
     import json
     from . import config
     with open(config.ARTIFACTS / "class_names.json", "w") as f:
-    json.dump(class_names, f, indent=2)
+        json.dump(class_names, f, indent=2)
     num_classes = len(class_names)
     print(f"Classes: {num_classes}")
 

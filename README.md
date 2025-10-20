@@ -48,8 +48,9 @@ Optimized for Mac Studio M1 Max (64 GB). One environment only: **GPU (Metal)**.
 ## 1) Setup
 ```bash
 bash scripts/setup_env.sh
-export FRUITS360_FORCE_CPU=1 #Run everything with CPU only.
-export FRUITS360_FORCE_CPU=0 #Run everything with GPU.
+export FRUITS360_CPU_ONLY=0 # or export FRUITS360_FORCE_CPU=0  (legacy compatible) ##Run  everything with GPU.
+export FRUITS360_CPU_ONLY=1 # or export FRUITS360_FORCE_CPU=1  (legacy compatible) ##Run  everything with CPU only.
+
 
 ##2) Download the Dataset
 Use script (or manual copy):
@@ -64,8 +65,12 @@ cd ~/Documents/ml-gpu
 source .venv/bin/activate
 
 ##full cleanup if necessary
+##
 ##rm -rf src/fruits360.egg-info
 ##pip uninstall fruits360 -y
+##deactivate
+cd ~/Documents/ml-gpu
+source .venv/bin/activate
 pip install -e .
 
 python -m fruits360.train
@@ -94,7 +99,7 @@ python -m fruits360.eval
 
 
 5) Inference
-python -m fruits360.infer --image "$HOME/data/Fruit-Images-Dataset/Test/Apple Golden 1/0_100.jpg"
+python -m fruits360.infer --image "$HOME/data/Fruit-Images-Dataset/Test/Apple Golden 2/321_100.jpg"
 
 Notes
 
@@ -111,8 +116,8 @@ Reproduce env: make freeze then reinstall with pip install -r requirements.lock.
 
     # 1.  Create and initialize environment
     bash scripts/setup_env.sh
-    export FRUITS360_FORCE_CPU=1 #Run everything with CPU only.
-    export FRUITS360_FORCE_CPU=0 #Run everything with GPU. 
+    export FRUITS360_CPU_ONLY=0 # or export FRUITS360_FORCE_CPU=0  (legacy compatible) ##Run  everything with GPU.
+    export FRUITS360_CPU_ONLY=1 # or export FRUITS360_FORCE_CPU=1  (legacy compatible) ##Run  everything with CPU only.
     # 2.  Fetch dataset
     bash scripts/download_data.sh
 
@@ -130,7 +135,7 @@ Reproduce env: make freeze then reinstall with pip install -r requirements.lock.
     python -m fruits360.eval
 
     #7. Inference
-    python -m fruits360.infer --image "$HOME/data/Fruit-Images-Dataset/Test/Apple Golden 2/3_100.jpg"
+    python -m fruits360.infer --image "$HOME/data/Fruit-Images-Dataset/Test/Apple Golden 2/321_100.jpg"
 
 
 
@@ -173,7 +178,7 @@ Reproduce env: make freeze then reinstall with pip install -r requirements.lock.
 10) Restore or clone from Git
 git clone https://github.com/<you>/fruits360-ml-gpu.git
 cd fruits360-ml-gpu
-git checkout baseline-20251020-2150
+git checkout baseline-[revision]
 python3 -m venv .venv && source .venv/bin/activate
-pip install -r artifacts/requirements-freeze.txt
+pip install -r artifacts/requirements.txt
 python -m fruits360.infer --image ...

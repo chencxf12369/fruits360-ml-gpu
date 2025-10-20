@@ -20,8 +20,8 @@ fi
 
 mkdir -p "$ART_DIR"
 
-echo "[snap] Capturing pip freeze -> artifacts/requirements-freeze.txt"
-python - <<'PY' > artifacts/requirements-freeze.txt
+echo "[snap] Capturing pip freeze -> artifacts/requirements.txt"
+python - <<'PY' > artifacts/requirements.txt
 import sys, subprocess
 subprocess.run([sys.executable, "-m", "pip", "freeze"], check=False)
 PY
