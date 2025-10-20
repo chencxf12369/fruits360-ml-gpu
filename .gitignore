@@ -17,6 +17,7 @@ artifacts/*.png
 artifacts/eval_metrics.json
 artifacts/train_history.csv
 artifacts/checkpoints/
+artifacts-*
 
 # Datasets (don’t version data)
 Fruit-Images-Dataset/
