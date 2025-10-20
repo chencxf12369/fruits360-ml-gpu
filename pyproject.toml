@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fruits360"
+version = "2.2.1"
+description = "Fruits-360 trainer (Apple Silicon GPU ready)"
+requires-python = ">=3.10"
+
+# Optional but handy metadata (safe to keep minimal)
+readme = { text = "Fruits-360 training utilities", content-type = "text/plain" }
+
+[tool.setuptools]
+# Use src/ layout
+package-dir = { "" = "src" }
+
+# Explicitly include our package (and any subpackages/modules)
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["fruits360*"]
+exclude = ["tests*", "docs*"]
+
+# If you keep non-.py files under the package later, uncomment:
+# [tool.setuptools.package-data]
+# "fruits360" = ["*.json", "*.csv", "*.txt", "assets/*"]

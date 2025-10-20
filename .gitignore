@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.env
+
+# macOS
+.DS_Store
+
+# TensorBoard
+artifacts/tb_logs/
+
+# Heavy artifacts (keep only metadata)
+artifacts/*.keras
+artifacts/*savedmodel*/
+artifacts/*.png
+artifacts/eval_metrics.json
+artifacts/train_history.csv
+artifacts/checkpoints/
+
+# Datasets (don’t version data)
+Fruit-Images-Dataset/
+data/
+!artifacts/config-summary.txt
+!artifacts/requirements-freeze.txt
+!artifacts/class_names.json
