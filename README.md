@@ -23,7 +23,7 @@ Project Structure
             └──plot.py
             └──...
 ----------
-Archive:
+```Archive:
 zip -r ml-gpu.zip ml-gpu -x 'ml-gpu/.venv/*' 'ml-gpu/artifacts-*' 'ml-gpu/src/fruits360/__pycache*' 'ml-gpu/src/fruits360.egg*'
 tar -czf ml-gpu.tar.gz \
   --exclude='ml-gpu/.venv' \
@@ -31,6 +31,7 @@ tar -czf ml-gpu.tar.gz \
   --exclude='ml-gpu/src/fruits360/__pycache__*' \
   --exclude='ml-gpu/src/fruits360.egg*' \
   ml-gpu
+```
 ----------
 
 
