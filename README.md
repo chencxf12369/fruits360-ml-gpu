@@ -48,7 +48,7 @@ tar -czf ml-gpu.tar.gz \
 
 
 ----------
-1. Environment Setup
+Environment Setup
 Optimized for Mac Studio M1 Max (64 GB). One environment only: **GPU (Metal)**.
 - Mixed precision enabled
 - MobileNetV2 @ 224 with BN frozen + tail fine-tuning
