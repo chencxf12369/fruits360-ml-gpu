@@ -23,6 +23,14 @@ Project Structure
             └──plot.py
             └──...
 
+Archive:
+zip -r ml-gpu.zip ml-gpu -x 'ml-gpu/.venv/*' 'ml-gpu/artifacts-*' 'ml-gpu/src/fruits360/__pycache*' 'ml-gpu/src/fruits360.egg*'
+tar -czf ml-gpu.tar.gz \
+  --exclude='ml-gpu/.venv' \
+  --exclude='ml-gpu/artifacts-*' \
+  --exclude='ml-gpu/src/fruits360/__pycache__*' \
+  --exclude='ml-gpu/src/fruits360.egg*' \
+  ml-gpu
 ----------
 
 
@@ -75,7 +83,7 @@ pip install -e .
 
 python -m fruits360.train
 
-cd /root/ml-gpu
+cd ~/Documents/ml-gpu
 pip install -e .
 
 python -m fruits360.train
@@ -175,7 +183,12 @@ Reproduce env: make freeze then reinstall with pip install -r requirements.lock.
 • Keras API Docs
 • Fruits 360 Dataset (Kaggle)
 
-10) Restore or clone from Git
+10)Git backup with Tag creation and push to Github.
+bash scripts/snapshot_baseline.sh
+git push origin main --tags
+git status
+
+11) Restore or clone from Git
 git clone https://github.com/<you>/fruits360-ml-gpu.git
 cd fruits360-ml-gpu
 git checkout baseline-[revision]

@@ -1,31 +1,61 @@
-PY := /usr/local/bin/python3.10
-RUN := source .venv/bin/activate
 
-.PHONY: venv install data train eval infer freeze clean
+# Makefile for fruits360 (TAB-safe)
+PY      := python
+PKG     := fruits360
+VENV    := .venv
+ACT     := $(VENV)/bin/activate
+ART     := artifacts
 
-venv:
-	$(PY) -m venv .venv
+.DEFAULT_GOAL := help
 
-install: venv
-	. .venv/bin/activate && pip install --upgrade pip setuptools wheel
-	. .venv/bin/activate && pip install -r requirements.txt
+help:
+	@echo "Targets:"
+	@echo "  setup     - Create venv, install deps"
+	@echo "  install   - pip install -e ."
+	@echo "  train     - python -m fruits360.train"
+	@echo "  eval      - python -m fruits360.eval"
+	@echo "  infer     - make infer IMAGE=/path/img.jpg"
+	@echo "  plot      - regenerate plots from artifacts"
+	@echo "  clean     - remove caches and artifacts/*"
+	@echo "  tabs      - count recipe lines starting with TAB"
 
-data:
-	bash scripts/download_data.sh
+setup:
+	@if [ -f "scripts/setup_env.sh" ]; then \\
+		bash scripts/setup_env.sh; \\
+	else \\
+		echo "[setup] no scripts/setup_env.sh -> falling back to make install"; \\
+		$(MAKE) install; \\
+	fi
+
+install:
+	$(PY) -m pip install -e .
 
 train:
-	. .venv/bin/activate && python -m fruits360.train
+	$(PY) -m $(PKG).train
 
 eval:
-	. .venv/bin/activate && python -m fruits360.eval
+	$(PY) -m $(PKG).eval
 
 infer:
-	. .venv/bin/activate && python -m fruits360.infer --image "$(IMG)"
+	@if [ -z "$(IMAGE)" ]; then \\
+		echo "Usage: make infer IMAGE=/absolute/path/to/file.jpg"; \\
+		exit 2; \\
+	fi
+	$(PY) -m $(PKG).infer --image "$(IMAGE)"
 
-freeze:
-	. .venv/bin/activate && pip freeze | sed '/^pkg_resources==/d' > requirements.lock.txt
-	@echo "Wrote requirements.lock.txt"
+plot:
+	$(PY) - <<'EOF'
+from fruits360 import config
+config.maybe_plot_after_run()
+print("[plot] regenerated plots under:", config.ARTIFACTS)
+EOF
 
 clean:
-	rm -rf .venv artifacts
+	@find . -name "__pycache__" -type d -prune -exec rm -rf {} + 2>/dev/null || true
+	@find . -name "*.pyc" -delete 2>/dev/null || true
+	@rm -rf $(ART)/*.png $(ART)/*.json $(ART)/tb_logs $(ART)/checkpoints 2>/dev/null || true
+	@echo "[clean] done"
 
+tabs:
+	@echo "Counting recipe lines that begin with a real TAB..."
+	@awk '/^[[:alnum:]_.-]+:/{rule=1;next} rule{if($$0 ~ /^\	/) c++; if($$0 ~ /^[^#[:space:]]/ || $$0 ~ /^$$/) rule=0} END{print c, "recipe lines start with a TAB"}' Makefile

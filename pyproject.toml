@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "fruits360"
 version = "2.2.1"
 description = "Fruits-360 trainer (Apple Silicon GPU ready)"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 
 # Optional but handy metadata (safe to keep minimal)
 readme = { text = "Fruits-360 training utilities", content-type = "text/plain" }

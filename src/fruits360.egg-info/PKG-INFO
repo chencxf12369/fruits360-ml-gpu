@@ -2,7 +2,7 @@ Metadata-Version: 2.4
 Name: fruits360
 Version: 2.2.1
 Summary: Fruits-360 trainer (Apple Silicon GPU ready)
-Requires-Python: >=3.10
+Requires-Python: >=3.11
 Description-Content-Type: text/plain
 
 Fruits-360 training utilities

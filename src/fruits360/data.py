@@ -3,9 +3,12 @@ from __future__ import annotations
 import tensorflow as tf
 from . import config
 
-# Keep your aliases
+# ---------------------------------------------------------------------
+# Aliases and constants
+# ---------------------------------------------------------------------
 AUTO = tf.data.AUTOTUNE
 dAUTO = tf.data.AUTOTUNE
+
 
 # ---------------------------------------------------------------------
 # helpers
@@ -49,25 +52,51 @@ def _augment_pipeline():
     return tf.keras.Sequential(layers, name="aug")
 
 
+# ---------------------------------------------------------------------
+# square padding and resize
+# ---------------------------------------------------------------------
+def _pad_to_square_and_resize(img_uint8: tf.Tensor,
+                              target_hw: tuple[int, int],
+                              method=tf.image.ResizeMethod.BILINEAR) -> tf.Tensor:
+    """
+    Pads an unbatched [H,W,3] uint8 image to square shape and resizes to target_hw.
+    Leaves values in [0,255]; later normalization brings it to [0,1].
+    """
+    shape = tf.shape(img_uint8)
+    h, w = shape[0], shape[1]
+    dim = tf.maximum(h, w)
+    dh, dw = dim - h, dim - w
+    pad_top, pad_bottom = dh // 2, dh - dh // 2
+    pad_left, pad_right = dw // 2, dw - dw // 2
+    img_pad = tf.pad(img_uint8,
+                     [[pad_top, pad_bottom], [pad_left, pad_right], [0, 0]],
+                     mode="CONSTANT", constant_values=0)
+    img_resized = tf.image.resize(img_pad, target_hw, method=method, antialias=True)
+    return tf.cast(img_resized, tf.float32)
+
+
+# ---------------------------------------------------------------------
+# dataset post-processing
+# ---------------------------------------------------------------------
 def _finalize_pipeline(ds, training: bool):
     """
     Final touches:
-      - ensure dtype float32 in [0,1]
-      - (optionally) apply light augmentation on train
-      - cache & prefetch
-    NOTE: image_dataset_from_directory already resized to (H, W).
+      - Pad & resize each image safely to square.
+      - Convert to float32 [0,1].
+      - Optionally apply light augmentation on training.
+      - Cache & prefetch.
     """
+    H, W = _hw_from_config()
+    interp = _interpolation()
     aug = _augment_pipeline() if training else None
 
-    def _to_float01(x, y):
+    def _prep_one(x, y):
+        # Ensure shape rank-3 (unbatched image)
+        x = _pad_to_square_and_resize(tf.cast(x, tf.float32), (H, W), method=interp)
         x = tf.image.convert_image_dtype(x, tf.float32)  # [0,1]
-        return x, y
+        return (aug(x, training=True), y) if (training and aug) else (x, y)
 
-    ds = ds.map(_to_float01, num_parallel_calls=AUTO)
-
-    if training and aug is not None:
-        ds = ds.map(lambda x, y: (aug(x, training=True), y), num_parallel_calls=AUTO)
-
+    ds = ds.map(_prep_one, num_parallel_calls=AUTO)
     ds = ds.cache()
     ds = ds.prefetch(AUTO)
     return ds
@@ -77,12 +106,13 @@ def _finalize_pipeline(ds, training: bool):
 # public loaders
 # ---------------------------------------------------------------------
 def load_train_val():
-    """Create train/val datasets with consistent preprocessing."""
+    """Create train/val datasets with consistent padding, resize, and augmentation."""
     H, W = _hw_from_config()
     batch = int(getattr(config, "BATCH", getattr(config, "BATCH_SIZE", 32)))
     seed = int(getattr(config, "SEED", 42))
     val_split = float(getattr(config, "VALIDATION_SPLIT", 0.15))
 
+    # Use unbatched mode to allow per-image pad/resize
     train_raw = tf.keras.utils.image_dataset_from_directory(
         config.TRAIN_DIR,
         labels="inferred",
@@ -90,8 +120,8 @@ def load_train_val():
         validation_split=val_split,
         subset="training",
         seed=seed,
-        image_size=(H, W),  # Keras resizes here
-        batch_size=batch,
+        image_size=None,       # keep raw sizes
+        batch_size=None,       # unbatched
         shuffle=True,
     )
 
@@ -102,8 +132,8 @@ def load_train_val():
         validation_split=val_split,
         subset="validation",
         seed=seed,
-        image_size=(H, W),
-        batch_size=batch,
+        image_size=None,
+        batch_size=None,
         shuffle=False,
     )
 
@@ -114,8 +144,9 @@ def load_train_val():
         except Exception:
             pass
 
-    train_ds = _finalize_pipeline(train_raw, training=True)
-    val_ds = _finalize_pipeline(val_raw, training=False)
+    # Apply final preprocessing and batching
+    train_ds = _finalize_pipeline(train_raw, training=True).batch(batch, drop_remainder=False)
+    val_ds = _finalize_pipeline(val_raw, training=False).batch(batch, drop_remainder=False)
     return train_ds, val_ds, class_names
 
 
@@ -131,9 +162,10 @@ def load_test():
         config.TEST_DIR,
         labels="inferred",
         label_mode="categorical",
-        image_size=(H, W),
-        batch_size=batch,
+        image_size=None,
+        batch_size=None,
         shuffle=False,
     )
-    test_ds = _finalize_pipeline(test_raw, training=False)
+
+    test_ds = _finalize_pipeline(test_raw, training=False).batch(batch, drop_remainder=False)
     return test_ds

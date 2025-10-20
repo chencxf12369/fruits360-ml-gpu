@@ -90,7 +90,13 @@ def main():
     train_ds, val_ds, class_names = data.load_train_val()
     import json
     from . import config
-    with open(config.ARTIFACTS / "class_names.json", "w") as f:
+#   save class names for inference display.
+#   with open(config.ARTIFACTS / "class_names.json", "w") as f:
+#        json.dump(class_names, f, indent=2)
+    cls_json = config.ARTIFACTS / "class_names.json"
+    cls_json.parent.mkdir(parents=True, exist_ok=True)
+    with open(cls_json, "w") as f:
+        import json
         json.dump(class_names, f, indent=2)
     num_classes = len(class_names)
     print(f"Classes: {num_classes}")
