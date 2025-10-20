@@ -12,6 +12,9 @@ from tensorflow import keras
 
 # Internal modules
 from fruits360 import config, utils
+from fruits360 import utils
+utils.ensure_device(prefer_gpu=True)
+
 # Ensure TensorFlow thread settings and optional GPU/CPU fallback
 utils.tune_threads()
 utils.ensure_device(prefer_gpu=True)

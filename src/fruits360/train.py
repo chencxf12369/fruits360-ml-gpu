@@ -12,6 +12,10 @@ from tensorflow import keras
 
 from . import config, utils, data, model as mdl
 
+from fruits360 import utils
+utils.ensure_device(prefer_gpu=True)
+
+
 
 def _plot_training_curves(history: keras.callbacks.History) -> None:
     acc_path = Path(getattr(config, "PLOT_ACC_PATH", config.ARTIFACTS / "acc.png"))
