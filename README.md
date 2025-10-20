@@ -22,7 +22,7 @@ Project Structure
             ├──utils.py
             └──plot.py
             └──...
-
+----------
 Archive:
 zip -r ml-gpu.zip ml-gpu -x 'ml-gpu/.venv/*' 'ml-gpu/artifacts-*' 'ml-gpu/src/fruits360/__pycache*' 'ml-gpu/src/fruits360.egg*'
 tar -czf ml-gpu.tar.gz \
@@ -68,7 +68,7 @@ Dataset is expected under:
 ~/data/Fruit-Images-Dataset/Training
 ~/data/Fruit-Images-Dataset/Test
 
-2) Train the Model
+## 2) Train the Model
 cd ~/Documents/ml-gpu
 source .venv/bin/activate
 
@@ -102,11 +102,11 @@ fruits360_savedmodel/
 
 train_log.csv
 
-4) Evaluate on official Test split
+## 3) Evaluate on official Test split
 python -m fruits360.eval
 
 
-5) Inference
+## 4) Inference
 python -m fruits360.infer --image "$HOME/data/Fruit-Images-Dataset/Test/Apple Golden 2/321_100.jpg"
 
 Notes
@@ -120,7 +120,7 @@ Reproduce env: make freeze then reinstall with pip install -r requirements.lock.
 
 
 
-6) Summary of Workflow
+## 5) Summary of Workflow
 
     # 1.  Create and initialize environment
     bash scripts/setup_env.sh
@@ -149,7 +149,7 @@ Reproduce env: make freeze then reinstall with pip install -r requirements.lock.
 
 
 
-7) Troubleshooting
+## 6) Troubleshooting
   --------------------------------------------------- ---------------------------------------------------------------------------------
   Symptom                                             Cause / Fix
   ModuleNotFoundError: No module named 'tensorflow'   Ensure you’e inside the correct venv (which python) and installed requirements.
@@ -160,7 +160,7 @@ Reproduce env: make freeze then reinstall with pip install -r requirements.lock.
 
 
 
-8) Revision History:
+## 7) Revision History:
 #Revision:
 #0.0.1 Raw script for basic scripts to run TensorFlow  with cpu only.
 #0.1.0 Adjust threads to optimize the host cpu via /ml/src/fruits360/config.py
@@ -178,17 +178,17 @@ Reproduce env: make freeze then reinstall with pip install -r requirements.lock.
 #2.2.1 Log plot addition.
 
 
-9) References
+## 8) References
 • TensorFlow Metal Plugin Guide
 • Keras API Docs
 • Fruits 360 Dataset (Kaggle)
 
-10)Git backup with Tag creation and push to Github.
+## 9)Git backup with Tag creation and push to Github.
 bash scripts/snapshot_baseline.sh
 git push origin main --tags
 git status
 
-11) Restore or clone from Git
+## 10) Restore or clone from GitHub
 git clone https://github.com/<you>/fruits360-ml-gpu.git
 cd fruits360-ml-gpu
 git checkout baseline-[revision]
