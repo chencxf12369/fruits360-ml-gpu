@@ -67,8 +67,9 @@ bash scripts/download_data.sh
 Dataset is expected under:
 ~/data/Fruit-Images-Dataset/Training
 ~/data/Fruit-Images-Dataset/Test
-
+```
 ## 2) Train the Model
+```bash
 cd ~/Documents/ml-gpu
 source .venv/bin/activate
 
@@ -101,12 +102,15 @@ fruits360_best.keras
 fruits360_savedmodel/
 
 train_log.csv
+```
 
 ## 3) Evaluate on official Test split
+```bash
 python -m fruits360.eval
 
-
+```
 ## 4) Inference
+```bash
 python -m fruits360.infer --image "$HOME/data/Fruit-Images-Dataset/Test/Apple Golden 2/321_100.jpg"
 
 Notes
@@ -119,8 +123,9 @@ Tune per workload; for heavier convs, INTEROP=1–2 and INTRA=cores are good sta
 Reproduce env: make freeze then reinstall with pip install -r requirements.lock.txt
 
 
-
+```
 ## 5) Summary of Workflow
+```bash
 
     # 1.  Create and initialize environment
     bash scripts/setup_env.sh
@@ -145,11 +150,12 @@ Reproduce env: make freeze then reinstall with pip install -r requirements.lock.
     #7. Inference
     python -m fruits360.infer --image "$HOME/data/Fruit-Images-Dataset/Test/Apple Golden 2/321_100.jpg"
 
-
+```
 
 
 
 ## 6) Troubleshooting
+```bash
   --------------------------------------------------- ---------------------------------------------------------------------------------
   Symptom                                             Cause / Fix
   ModuleNotFoundError: No module named 'tensorflow'   Ensure you’e inside the correct venv (which python) and installed requirements.
@@ -157,10 +163,11 @@ Reproduce env: make freeze then reinstall with pip install -r requirements.lock.
   Slow training on M1/M2                              Confirm you’e using legacy.Adam optimizer (already fixed in model.py).
   Logs mix between runs                               Each venv has its own artifact root (artifacts-cpu vs artifacts-gpu).
   --------------------------------------------------- ---------------------------------------------------------------------------------
-
+```
 
 
 ## 7) Revision History:
+```bash
 #Revision:
 #0.0.1 Raw script for basic scripts to run TensorFlow  with cpu only.
 #0.1.0 Adjust threads to optimize the host cpu via /ml/src/fruits360/config.py
@@ -176,22 +183,26 @@ Reproduce env: make freeze then reinstall with pip install -r requirements.lock.
 #2.1.1 create additional environment for GPU.
 #2.1.1 Log separation between two environments(CPU only and GPU).
 #2.2.1 Log plot addition.
-
+```
 
 ## 8) References
+```bash
 • TensorFlow Metal Plugin Guide
 • Keras API Docs
 • Fruits 360 Dataset (Kaggle)
-
+```
 ## 9)Git backup with Tag creation and push to Github.
+```bash
 bash scripts/snapshot_baseline.sh
 git push origin main --tags
 git status
-
+```
 ## 10) Restore or clone from GitHub
+```bash
 git clone https://github.com/<you>/fruits360-ml-gpu.git
 cd fruits360-ml-gpu
 git checkout baseline-[revision]
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r artifacts/requirements.txt
 python -m fruits360.infer --image ...
+```
