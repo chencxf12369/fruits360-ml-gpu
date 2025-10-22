@@ -59,7 +59,8 @@ Optimized for Mac Studio M1 Max (64 GB). One environment only: **GPU (Metal)**.
 ```bash
 bash scripts/setup_env.sh
 export FRUITS360_CPU_ONLY=0 # or export FRUITS360_FORCE_CPU=0  (legacy compatible) ##Run  everything with GPU.
-export FRUITS360_CPU_ONLY=1 # or export FRUITS360_FORCE_CPU=1  (legacy compatible) ##Run  everything with CPU only.
+export FRUITS360_CPU_ONLY=1 # or export FRUITS360_FORCE_CPU=1  (legacy compatible) ##For CPU Run only
+export FRUITS360_BATCH_SIZE=16 ##For CPU Run only, since the Image_Size is 224X224X3, use BATCH_SIZE=16 instead of 64(GPU use) for better  performance.
 
 
 ##2) Download the Dataset
@@ -185,6 +186,7 @@ Reproduce env: make freeze then reinstall with pip install -r requirements.lock.
 #2.1.1 create additional environment for GPU.
 #2.1.1 Log separation between two environments(CPU only and GPU).
 #2.2.1 Log plot addition.
+#2.2.2 add fallback of setup script failure due to pip has project info without proper metadata, remove stale folder from site-packages.
 ```
 
 ## 8) References

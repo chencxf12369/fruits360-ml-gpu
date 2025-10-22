@@ -15,6 +15,8 @@ from . import config, utils, data, model as mdl
 from fruits360 import utils
 utils.ensure_device(prefer_gpu=True)
 
+from fruits360 import config
+print(f"Input size: IMAGE_SIZE={config.IMAGE_SIZE}, INPUT_SHAPE={config.INPUT_SHAPE}")
 
 
 def _plot_training_curves(history: keras.callbacks.History) -> None:

@@ -17,14 +17,19 @@ echo "[setup] Detected OS=$OS ARCH=$ARCH"
 # Python selection
 # ---------------------------------------------------------------------
 if [[ "$OS" == "Darwin" ]]; then
-  PY="/opt/homebrew/bin/python3.11"
+  # Prefer Homebrew Python 3.11; fall back to python3 if not found.
+  if [[ -x "/opt/homebrew/bin/python3.11" ]]; then
+    PY="/opt/homebrew/bin/python3.11"
+  else
+    PY="$(command -v python3 || true)"
+  fi
 else
-  PY="/usr/bin/python3.10"
+  PY="$(command -v python3 || true)"
 fi
 
-if ! [ -x "$PY" ]; then
-  echo "ERROR: Python not found at $PY"
-  echo "Install with:  brew install python@3.11   (on macOS/arm64)"
+if [[ -z "${PY:-}" || ! -x "$PY" ]]; then
+  echo "ERROR: Python 3 not found."
+  echo "On macOS/arm64:  brew install python@3.11"
   exit 1
 fi
 
@@ -32,7 +37,7 @@ fi
 # Create virtual environment
 # ---------------------------------------------------------------------
 echo "[setup] Creating venv (.venv)"
-$PY -m venv .venv
+"$PY" -m venv .venv
 # shellcheck disable=SC1091
 source .venv/bin/activate
 python -m pip install -U pip setuptools wheel
@@ -52,8 +57,10 @@ if [[ "$OS" == "Darwin" && "$ARCH" == "arm64" ]]; then
   fi
   python -m pip install "tensorflow-metal==1.1.0"
 else
-  echo "[setup] Non-macOS → CPU-only install from requirements.txt"
-  python -m pip install -r requirements.txt
+  echo "[setup] Non-macOS → CPU-only install from requirements.txt (if present)"
+  if [[ -f requirements.txt ]]; then
+    python -m pip install -r requirements.txt
+  fi
 fi
 
 echo "[setup] Installing common Python packages"
@@ -64,7 +71,18 @@ python -m pip install "numpy<2.0" pandas==2.2.3 pillow==10.4.0 \
 # Install local package (editable) and verify import
 # ---------------------------------------------------------------------
 echo "[setup] Installing fruits360 (editable)"
-pip install -e .
+if ! python -m pip install -e . ; then
+  echo "[setup] Editable install failed; cleaning stale fruits360 entries and retrying..."
+  python - <<'PY'
+import sys, sysconfig, pathlib, shutil
+sp = pathlib.Path(sysconfig.get_paths()['purelib'])
+for d in sp.glob('fruits360*'):
+    if d.is_dir():
+        print("Removing", d)
+        shutil.rmtree(d, ignore_errors=True)
+PY
+  python -m pip install --force-reinstall --no-deps -e .
+fi
 
 # ---------------------------------------------------------------------
 # Permanent sys.path fix via .pth file
@@ -78,8 +96,8 @@ pth = pathlib.Path(site_pkgs) / "fruits360_src.pth"
 pth.write_text(str(root / "src") + "\n")
 print(f"[verify] wrote {pth}")
 sys.path.append(str(root / "src"))
-import fruits360, importlib
-print("[verify] import fruits360 OK:", pathlib.Path(fruits360.__file__).resolve())
+import fruits360, importlib, pathlib as _p
+print("[verify] import fruits360 OK:", _p.Path(fruits360.__file__).resolve())
 importlib.import_module("fruits360.plot")
 print("[verify] fruits360.plot import OK")
 PY
@@ -91,15 +109,16 @@ export TF_CPP_MIN_LOG_LEVEL=1
 if [[ "$OS" != "Darwin" ]]; then
   export TF_ENABLE_ONEDNN_OPTS=0
 fi
-export PYTHONPATH="$PWD/src:${PYTHONPATH:-}"
+export PYTHONPATH="$PROJECT_ROOT/src:${PYTHONPATH:-}"
 ACT=.venv/bin/activate
-grep -q 'export PYTHONPATH=' "$ACT" || printf '\n# ensure src on sys.path\nexport PYTHONPATH="%s/src:${PYTHONPATH:-}"\n' "$PWD" >> "$ACT"
-
-
-echo "[setup] Activate with command: "
-echo "cd /root/ml-gpu  | source .venv/bin/activate"
-echo "pip install -e ."
-echo "[setup] Environment ready."
+grep -q 'export PYTHONPATH=' "$ACT" || printf '\n# ensure src on sys.path\nexport PYTHONPATH="%s/src:${PYTHONPATH:-}"\n' "$PROJECT_ROOT" >> "$ACT"
 
 echo "[setup] "
-echo "[setup] Then run:      python -m fruits360.train   |   python -m fruits360.eval   |   python -m fruits360.plot | python -m fruits360.infer --image "$HOME/data/Fruit-Images-Dataset/Test/Apple\ Golden\ 2/321_100.jpg""
+echo "[setup] Activate your env with:"
+echo "source \"$PROJECT_ROOT/.venv/bin/activate\""
+echo "[setup] Then run:"
+echo "python -m fruits360.train"
+echo "python -m fruits360.eval"
+echo "python -m fruits360.plot"
+echo "python -m fruits360.infer --image \"$HOME/data/Fruit-Images-Dataset/Test/Apple Golden 2/321_100.jpg\""
+echo "[setup] Environment ready."
