@@ -1,54 +1,57 @@
+SHELL := /usr/bin/env bash
+.ONESHELL:
+.SHELLFLAGS := -eu -o pipefail -c
 
-# Makefile for fruits360 (TAB-safe)
-PY      := python
+PY      := python3
 PKG     := fruits360
 VENV    := .venv
 ACT     := $(VENV)/bin/activate
 ART     := artifacts
 
+.PHONY: help setup install train eval plot clean tabs
+
 .DEFAULT_GOAL := help
 
 help:
 	@echo "Targets:"
-	@echo "  setup     - Create venv, install deps"
-	@echo "  install   - pip install -e ."
-	@echo "  train     - python -m fruits360.train"
-	@echo "  eval      - python -m fruits360.eval"
-	@echo "  infer     - make infer IMAGE=/path/img.jpg"
-	@echo "  plot      - regenerate plots from artifacts"
-	@echo "  clean     - remove caches and artifacts/*"
-	@echo "  tabs      - count recipe lines starting with TAB"
+	@echo "  setup     - Run scripts/setup_env.sh (create venv, install TF)"
+	@echo "  install   - pip install -e . (inside venv)"
+	@echo "  train     - Train model"
+	@echo "  eval      - Evaluate model"
+	@echo "  plot      - Regenerate plots"
+	@echo "  clean     - Remove caches/artifacts"
+	@echo "  tabs      - Check TAB indentation"
 
+# ---------------------------------------------------------------
+# Setup: delegate to scripts/setup_env.sh
+# ---------------------------------------------------------------
 setup:
-	@if [ -f "scripts/setup_env.sh" ]; then \\
-		bash scripts/setup_env.sh; \\
-	else \\
-		echo "[setup] no scripts/setup_env.sh -> falling back to make install"; \\
-		$(MAKE) install; \\
+	@if [ -x "scripts/setup_env.sh" ]; then \
+		echo "[setup] Running scripts/setup_env.sh ..."; \
+		bash scripts/setup_env.sh; \
+	else \
+		echo "[setup] scripts/setup_env.sh not found or not executable."; \
+		echo "[setup] Creating venv manually..."; \
+		$(PY) -m venv $(VENV); \
+		source $(ACT); \
+		pip install -U pip setuptools wheel; \
 	fi
 
 install:
-	$(PY) -m pip install -e .
+	@source $(ACT); \
+	pip install -e .
 
 train:
+	@source $(ACT); \
 	$(PY) -m $(PKG).train
 
 eval:
+	@source $(ACT); \
 	$(PY) -m $(PKG).eval
 
-infer:
-	@if [ -z "$(IMAGE)" ]; then \\
-		echo "Usage: make infer IMAGE=/absolute/path/to/file.jpg"; \\
-		exit 2; \\
-	fi
-	$(PY) -m $(PKG).infer --image "$(IMAGE)"
-
 plot:
-	$(PY) - <<'EOF'
-from fruits360 import config
-config.maybe_plot_after_run()
-print("[plot] regenerated plots under:", config.ARTIFACTS)
-EOF
+	@source $(ACT); \
+	$(PY) -c "from fruits360 import config; config.maybe_plot_after_run(); print('[plot] regenerated plots under:', config.ARTIFACTS)"
 
 clean:
 	@find . -name "__pycache__" -type d -prune -exec rm -rf {} + 2>/dev/null || true
@@ -57,5 +60,8 @@ clean:
 	@echo "[clean] done"
 
 tabs:
-	@echo "Counting recipe lines that begin with a real TAB..."
-	@awk '/^[[:alnum:]_.-]+:/{rule=1;next} rule{if($$0 ~ /^\	/) c++; if($$0 ~ /^[^#[:space:]]/ || $$0 ~ /^$$/) rule=0} END{print c, "recipe lines start with a TAB"}' Makefile
+	@awk ' \
+	  /^[[:alnum:]_.-]+:/{inrule=1;next} \
+	  inrule{ if($$0 ~ /^\t/) {tabs++} else if($$0 ~ /^[[:space:]]*$$/) {} else {notabs++} } \
+	  /^$$/{inrule=0} \
+	  END{ printf("Recipe lines with TAB: %d; non-TAB recipe lines: %d\n", tabs, notabs) }' Makefile
