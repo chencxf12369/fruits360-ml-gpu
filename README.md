@@ -218,6 +218,7 @@ Reproduce env: make freeze then reinstall with pip install -r requirements.lock.
 #2.2.1 Log plot addition.
 #2.2.2 add fallback of setup script failure due to pip has project info without proper metadata, remove stale folder from site-packages.
 #2.2.3 Auto scaling for CPU threads and batch size.
+#2.2.4 Restore padding in agumentation.
 ```
 
 ## 8) References
