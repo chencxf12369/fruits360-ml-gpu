@@ -1,4 +1,4 @@
-Fruits360 –Image Classification on macOS (CPU + GPU)
+
 
 A TensorFlow / Keras image-classification project for fruit detection,
 fully tested on
@@ -73,7 +73,24 @@ bash scripts/setup_env.sh
 #Alternatively, execute the following in the project environment.
 export FRUITS360_CPU_ONLY=0 # or export FRUITS360_FORCE_CPU=0  (legacy compatible) ##Run  everything with GPU.
 export FRUITS360_CPU_ONLY=1 # or export FRUITS360_FORCE_CPU=1  (legacy compatible) ##For CPU Run only
-export FRUITS360_BATCH_SIZE=16 ##For CPU Run only, since the Image_Size is 224X224X3, use BATCH_SIZE=16 instead of 64(GPU use) for better  performance.
+
+Other variables for performance finetune:
+    export FRUITS360_BATCH_SIZE=8 ##For CPU Run only, since the Image_Size is 224X224X3, use BATCH_SIZE=16 instead of 64(GPU use) for better  performance.
+    export FRUITS360_OMP_THREADS=8
+    export FRUITS360_TF_INTRAOP_THREADS=8
+    export FRUITS360_TF_INTEROP_THREADS=2
+
+    # smaller per-step memory
+    export FRUITS360_BATCH_SIZE=16
+
+    #shrink shuffle buffer (defaults to BATCH*64 which can be big)
+    export FRUITS360_SHUFFLE_BUFFER=2048
+
+    # (optional) if you suspect oneDNN kernel variants chewing RAM/threads
+    # export TF_ENABLE_ONEDNN_OPTS=0
+
+    #run with lower OS priority so the desktop stays responsive
+    nice -n 10 python -m fruits360.train
 
 
 ##2) Download the Dataset
@@ -200,6 +217,7 @@ Reproduce env: make freeze then reinstall with pip install -r requirements.lock.
 #2.1.1 Log separation between two environments(CPU only and GPU).
 #2.2.1 Log plot addition.
 #2.2.2 add fallback of setup script failure due to pip has project info without proper metadata, remove stale folder from site-packages.
+#2.2.3 Auto scaling for CPU threads and batch size.
 ```
 
 ## 8) References

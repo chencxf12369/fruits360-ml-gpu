@@ -179,6 +179,11 @@ def main():
     # Save final/best model
     net.save(config.BEST_KERAS)
     print(f"[train] Saved best model → {config.BEST_KERAS}")
+   
+    # Report best metric
+    best_val_acc = max(history.history.get("val_accuracy", [0]))
+    best_epoch = history.history["val_accuracy"].index(best_val_acc) + 1
+    print(f"[train] Best validation accuracy: {best_val_acc:.4f} (epoch {best_epoch})")
 
     # Plots
     try:
