@@ -1,10 +1,38 @@
 Metadata-Version: 2.4
 Name: fruits360
-Version: 2.2.2
-Summary: Fruits-360 trainer (Apple Silicon GPU ready)
-Requires-Python: >=3.11
+Version: 2.2.3
+Summary: Fruit image classification project using TensorFlow/Keras with GPU/CPU auto-detection.
+Author-email: Jason Tan <chencxf12369@gmail.com>
+License: Copyright (c) 2025 Fruits360-ML-GPU
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+        
+Project-URL: Homepage, https://github.com/chencxf12369/fruits360-ml-gpu
+Project-URL: Repository, https://github.com/chencxf12369/fruits360-ml-gpu
+Project-URL: Issues, https://github.com/chencxf12369/fruits360-ml-gpu/issues
+Keywords: tensorflow,keras,image-classification,fruit360,deep-learning,transfer-learning
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Framework :: TensorFlow
+Requires-Python: >=3.9
 Description-Content-Type: text/plain
 License-File: LICENSE
+Requires-Dist: tensorflow>=2.15.0
+Requires-Dist: keras>=2.15.0
+Requires-Dist: numpy>=1.24.0
+Requires-Dist: pandas>=2.0.0
+Requires-Dist: matplotlib>=3.7.0
+Requires-Dist: scikit-learn>=1.3.0
+Provides-Extra: dev
+Requires-Dist: black; extra == "dev"
+Requires-Dist: flake8; extra == "dev"
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: mypy; extra == "dev"
 Dynamic: license-file
 
 Fruits-360 training utilities

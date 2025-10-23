@@ -13,4 +13,5 @@ src/fruits360/utils.py
 src/fruits360.egg-info/PKG-INFO
 src/fruits360.egg-info/SOURCES.txt
 src/fruits360.egg-info/dependency_links.txt
+src/fruits360.egg-info/requires.txt
 src/fruits360.egg-info/top_level.txt
