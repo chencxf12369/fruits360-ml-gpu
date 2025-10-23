@@ -117,14 +117,27 @@ def _auto_runtime_setup() -> None:
 
     # 3) Batch size: respect env; else pick heuristic
     if "FRUITS360_BATCH_SIZE" not in os.environ:
-        bs = config.suggest_batch_size(num_gpus=num_gpus, on_apple_silicon=_is_apple_silicon())
+    #   bs = config.suggest_batch_size(num_gpus=num_gpus, on_apple_silicon=_is_apple_silicon())
+    #Inline replacement for config.suggest_batch_size()
+    if num_gpus >= 1:
+    #GPU detected → bigger batch
+        if _is_apple_silicon():
+            bs = 64     # good default for Apple Metal GPU
+      	else:
+            bs = 128    # typical CUDA/ROCm GPU
+	else:
+    # CPU only → balanced at ~75% of logical cores
+        logical = os.cpu_count() or 8
+        bs = max(8, min(32, (int(logical * 0.75) // 2) * 2))  # even number 8–32
+        print(f"[train] Auto batch size set to: {bs}")
+      
         os.environ["FRUITS360_BATCH_SIZE"] = str(bs)
         # Keep config aliases in sync so data.load_train_val() sees it
         config.BATCH_SIZE = bs
         config.BATCH = bs
         # Update dependent defaults that were derived at import time
         config.SHUFFLE_BUFFER = max(1000, bs * 64)
-
+        
     # 4) Mixed precision: enable when any GPU is present (safe for MPS/CUDA)
     if num_gpus >= 1:
         mixed_precision.set_global_policy("mixed_float16")
