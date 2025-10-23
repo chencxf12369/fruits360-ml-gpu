@@ -5,32 +5,33 @@ fully tested on
 macOS Sequoia (M1 Max ) with Python 3.11 and GPU (Metal) execution.
 
 ----------
-
-Project Structure:
-
+# 📁 Project Structure
 fruits360-ml-gpu/
 │
 ├── src/fruits360/
-│   ├── __init__.py         ← Marks directory as a Python package
-│   ├── config.py           ← Central configuration (paths, constants, parameters)
-│   ├── data.py             ← Builds tf.data pipeline (load, augment, prefetch, cache)
-│   ├── model.py            ← Defines MobileNetV2 base + classifier head
-│   ├── train.py            ← Main training entrypoint (compile, fit, save best model)
-│   ├── eval.py             ← Post-training evaluation and metrics computation
-│   ├── infer.py            ← Inference script for new or unseen images
-│   ├── plot.py             ← Generates accuracy/loss charts, confusion matrices
-│   └── utils.py            ← Helper utilities (summary, logging, checkpoint paths)
+│   ├── __init__.py          ← Marks directory as a Python package
+│   ├── config.py            ← Central configuration (paths, constants, parameters)
+│   ├── data.py              ← tf.data pipeline (load, resize/pad, augment, cache, prefetch)
+│   ├── model.py             ← MobileNetV2 backbone + classifier head
+│   ├── train.py             ← Training entrypoint (compile, fit, callbacks, save best model)
+│   ├── eval.py              ← Post-training evaluation on test/val sets
+│   ├── infer.py             ← Inference for unseen images
+│   ├── plot.py              ← Accuracy/loss plots, confusion matrix generation
+│   └── utils.py             ← Helpers (seeding, logging, paths, utilities)
 │
 ├── scripts/
-│   ├── setup_env.sh        ← Creates virtual environment & installs dependencies
-│   ├── snapshot_baseline.sh← Generates Git baseline tag with timestamp
-│   └── (optional future scripts) 
+│   ├── setup_env.sh         ← Creates venv & installs dependencies (macOS/Linux)
+│   ├── setup_env.ps1        ← PowerShell setup script (Windows)
+│   ├── snapshot_baseline.sh ← Creates Git baseline tag with timestamp
+│   └── (optional future scripts)
 │
-├── artifacts/              ← Stores checkpoints, training history, exported models
-├── requirements.txt         ← Python dependencies list
-├── Makefile                 ← Shortcut commands for setup, train, evaluate, clean
-├── README.md                ← Complete documentation and usage guide
-└── LICENSE                  ← Github Repository license
+├── artifacts/               ← Model checkpoints, history, TensorBoard logs
+├── requirements.txt          ← Minimal dependency list for compatibility
+├── pyproject.toml            ← Modern packaging config (PEP 621, setuptools src-layout)
+├── Makefile                  ← Shortcut commands: setup, train, eval, plot, clean
+├── README.md                 ← Full documentation and usage guide
+└── LICENSE                   ← Repository license
+
 
 
 ----------
