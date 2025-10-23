@@ -49,35 +49,17 @@ def _interpolation():
 
 def _resize_with_pad(img: tf.Tensor, tgt_h: int, tgt_w: int) -> tf.Tensor:
     """
-    Keep aspect ratio: resize the longer side to target, then pad to (tgt_h, tgt_w).
-    Padding color is black (0.0); change here if another color is desired.
+    Aspect-preserving resize with padding to (tgt_h, tgt_w).
+    Works for both single images (H, W, 3) and batches (B, H, W, 3).
     """
-    # Ensure float for resize math (input from image_dataset may be float32 in [0,255])
-    img = tf.cast(img, tf.float32)
-
-    h = tf.shape(img)[0]
-    w = tf.shape(img)[1]
-    scale = tf.cast(tgt_h, tf.float32) / tf.cast(tf.maximum(h, w), tf.float32)
-    new_h = tf.cast(tf.round(tf.cast(h, tf.float32) * scale), tf.int32)
-    new_w = tf.cast(tf.round(tf.cast(w, tf.float32) * scale), tf.int32)
-
-    img = tf.image.resize(img, [new_h, new_w], method=_interpolation())
-
-    pad_h = tgt_h - new_h
-    pad_w = tgt_w - new_w
-    pad_top = pad_h // 2
-    pad_bottom = pad_h - pad_top
-    pad_left = pad_w // 2
-    pad_right = pad_w - pad_left
-
-    img = tf.pad(
-        img,
-        paddings=[[pad_top, pad_bottom], [pad_left, pad_right], [0, 0]],
-        mode="CONSTANT",
-        constant_values=0.0,
+    img = tf.image.resize_with_pad(
+        image=img,
+        target_height=tgt_h,
+        target_width=tgt_w,
+        method=_interpolation(),
+        antialias=True,
     )
     return img
-
 
 def _augment_pipeline():
     """Light augmentation pipeline – gated by config.USE_AUGMENTATION."""
