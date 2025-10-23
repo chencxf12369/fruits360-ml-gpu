@@ -179,7 +179,15 @@ def main():
     # Save final/best model
     net.save(config.BEST_KERAS)
     print(f"[train] Saved best model → {config.BEST_KERAS}")
-   
+  
+    # After saving best model
+    try:
+        from . import eval as eval_module
+        print("[train] Running post-training evaluation...")
+        eval_module.main(model_path=BEST_KERAS, save_json=True)
+    except Exception as e:
+        print(f"[train] Skipped auto-evaluation due to: {e}")
+ 
     # Report best metric
     best_val_acc = max(history.history.get("val_accuracy", [0]))
     best_epoch = history.history["val_accuracy"].index(best_val_acc) + 1

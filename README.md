@@ -89,6 +89,9 @@ Other variables for performance finetune:
 
     # (optional) if you suspect oneDNN kernel variants chewing RAM/threads
     # export TF_ENABLE_ONEDNN_OPTS=0
+    
+    # Disable CACHE prefetch for memory exhausting issue, works with TF_ENABLE_ONEDNN_OPTS=1 
+    #export FRUITS360_CACHE=0
 
     #run with lower OS priority so the desktop stays responsive
     nice -n 10 python -m fruits360.train
