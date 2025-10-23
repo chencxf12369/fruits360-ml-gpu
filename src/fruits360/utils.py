@@ -55,3 +55,14 @@ def tune_threads(verbose: bool = True) -> None:
               "OMP_NUM_THREADS=", os.environ.get("OMP_NUM_THREADS"),
               "TF_NUM_INTRAOP_THREADS=", os.environ.get("TF_NUM_INTRAOP_THREADS"),
               "TF_NUM_INTEROP_THREADS=", os.environ.get("TF_NUM_INTEROP_THREADS"))
+
+
+import random, numpy as np, tensorflow as tf
+def setup_seed(seed: int = 42):
+    """
+    Set random seeds for Python, NumPy, and TensorFlow to ensure reproducibility.
+    """
+    random.seed(seed)
+    np.random.seed(seed)
+    tf.random.set_seed(seed)
+    print(f"[utils] Random seed set to {seed}")
