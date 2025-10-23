@@ -1,240 +1,150 @@
-# src/fruits360/train.py
-from __future__ import annotations
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Train script for Fruits360 project — CPU/GPU auto-configured.
+Compatible with macOS (Metal), Ubuntu (CUDA), and Windows (CPU).
+"""
 
 import os
-import time
-import contextlib
-from pathlib import Path
+import multiprocessing
 import platform
-
-import matplotlib
-matplotlib.use("Agg")  # headless
-import matplotlib.pyplot as plt
-
 import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import mixed_precision
-
-from . import config, utils, data, model as mdl
-
-# Keep your existing absolute imports (back-compat)
-from fruits360 import utils as _utils_pkg
-_utils_pkg.ensure_device(prefer_gpu=True)
-
-from fruits360 import config as _config_pkg
-print(f"Input size: IMAGE_SIZE={_config_pkg.IMAGE_SIZE}, INPUT_SHAPE={_config_pkg.INPUT_SHAPE}")
+from fruits360 import data, model, config
+from fruits360.utils import setup_seed
 
 
-def _plot_training_curves(history: keras.callbacks.History) -> None:
-    acc_path = Path(getattr(config, "PLOT_ACC_PATH", config.ARTIFACTS / "acc.png"))
-    loss_path = Path(getattr(config, "PLOT_LOSS_PATH", config.ARTIFACTS / "loss.png"))
-    acc_path.parent.mkdir(parents=True, exist_ok=True)
+# ============================================================
+# 1. Automatic CPU Thread Scaling (~75% utilization)
+# ============================================================
+cpu_cores = multiprocessing.cpu_count()
+omp = max(1, int(cpu_cores * 0.75))
+intra = omp
+interop = max(1, cpu_cores // 4)
 
-    hist = history.history
-    epochs = range(1, len(hist.get("accuracy", [])) + 1)
+os.environ["OMP_NUM_THREADS"] = str(omp)
+os.environ["TF_NUM_INTRAOP_THREADS"] = str(intra)
+os.environ["TF_NUM_INTEROP_THREADS"] = str(interop)
 
-    # Accuracy
-    plt.figure(figsize=(7, 5))
-    for key in [k for k in hist.keys() if k.lower() in {"accuracy", "val_accuracy"}]:
-        plt.plot(epochs, hist[key], label=key)
-    plt.xlabel("Epoch"); plt.ylabel("Accuracy"); plt.title("Accuracy")
-    plt.grid(True, ls="--", alpha=.4); plt.legend(); plt.tight_layout()
-    plt.savefig(acc_path, dpi=150); plt.close()
+print(f"[Auto Thread Config] Detected {cpu_cores} cores → "
+      f"OMP={omp}, INTRA={intra}, INTER={interop}")
 
-    # Loss
-    plt.figure(figsize=(7, 5))
-    for key in [k for k in hist.keys() if k.lower() in {"loss", "val_loss"}]:
-        plt.plot(epochs, hist[key], label=key)
-    plt.xlabel("Epoch"); plt.ylabel("Loss"); plt.title("Loss")
-    plt.grid(True, ls="--", alpha=.4); plt.legend(); plt.tight_layout()
-    plt.savefig(loss_path, dpi=150); plt.close()
-
-    print(f"[plot] Wrote:\n - {acc_path}\n - {loss_path}")
-
-
-def _maybe_make_alias(primary_csv: Path) -> None:
-    """
-    If a second log filename is configured and would contain the exact same data,
-    create/refresh a symlink that points to the primary CSV instead of writing twice.
-    """
-    alias_path = getattr(config, "TRAIN_LOG_CSV", None)
-    if not alias_path:
-        # Back-compat: some configs may use HISTORY_LOG_CSV or HISTORY_CSV
-        alias_path = getattr(config, "HISTORY_LOG_CSV", None)
-    if not alias_path:
-        return
-
-    alias_path = Path(alias_path)
-    if alias_path.resolve() == primary_csv.resolve():
-        return  # same file already; nothing to do
-
-    alias_path.parent.mkdir(parents=True, exist_ok=True)
+# ============================================================
+# 2. GPU memory configuration (prevent freeze)
+# ============================================================
+gpus = tf.config.list_physical_devices("GPU")
+if gpus:
     try:
-        if alias_path.exists() or alias_path.is_symlink():
-            alias_path.unlink()
-        alias_path.symlink_to(primary_csv.resolve())
-        print(f"[log] Alias created: {alias_path} -> {primary_csv.name}")
+        for g in gpus:
+            tf.config.experimental.set_memory_growth(g, True)
+        print(f"[GPU] Memory growth enabled for {len(gpus)} GPU(s)")
     except Exception as e:
-        # Symlink may be restricted; silently fall back by copying once at end.
-        try:
-            import shutil
-            shutil.copy2(primary_csv, alias_path)
-            print(f"[log] Copied log once to: {alias_path} (symlink unavailable: {e})")
-        except Exception as e2:
-            print(f"[log] Could not create alias for log file: {e2}")
+        print(f"[GPU] Warning: could not enable memory growth: {e}")
+else:
+    print("[GPU] No GPUs visible; CPU mode active")
 
-
-# -----------------------------
-# Auto-scaling bootstrap
-# -----------------------------
+# ============================================================
+# 3. Helpers
+# ============================================================
 def _is_apple_silicon() -> bool:
-    return (platform.system() == "Darwin" and platform.machine() == "arm64")
+    return platform.system() == "Darwin" and platform.machine().lower() in {"arm64", "aarch64"}
 
-def _auto_runtime_setup() -> None:
+
+def _auto_runtime_setup():
     """
-    Set balanced (~75%) defaults in-code without requiring shell exports:
-      - Threads (OMP/TF intra/inter)
-      - Batch size (based on device)
-      - Mixed precision on GPU
-    Everything remains overridable by existing FRUITS360_* env vars.
+    Configure runtime parameters automatically depending on GPU/CPU environment.
     """
-    # 1) Device presence
-    gpus = tf.config.list_physical_devices("GPU")
-    num_gpus = len(gpus)
+    num_gpus = len(tf.config.list_physical_devices("GPU"))
+    print(f"[Runtime] GPUs visible: {tf.config.list_physical_devices('GPU')}")
+    print(f"Input size: IMAGE_SIZE={config.IMAGE_SIZE}, INPUT_SHAPE={config.INPUT_SHAPE}")
+    print(f"TF: {tf.__version__}")
 
-    # 2) Threads: respect existing env if set; otherwise choose ~75%
-    if "FRUITS360_TF_INTRAOP_THREADS" not in os.environ or "FRUITS360_TF_INTEROP_THREADS" not in os.environ:
-        cores = os.cpu_count() or 8
-        intra = max(2, int(cores * 0.75))
-        inter = max(1, int(intra / 4))
-        os.environ.setdefault("FRUITS360_TF_INTRAOP_THREADS", str(intra))
-        os.environ.setdefault("FRUITS360_TF_INTEROP_THREADS", str(inter))
-        os.environ.setdefault("FRUITS360_OMP_THREADS",       str(intra))
-        # Keep config module in sync for utils.tune_threads()
-        config.TF_INTRAOP_THREADS = int(os.environ["FRUITS360_TF_INTRAOP_THREADS"])
-        config.TF_INTEROP_THREADS = int(os.environ["FRUITS360_TF_INTEROP_THREADS"])
-        config.OMP_THREADS        = int(os.environ["FRUITS360_OMP_THREADS"])
-
-    # 3) Batch size: respect env; else pick heuristic
-    if "FRUITS360_BATCH_SIZE" not in os.environ:
-    #   bs = config.suggest_batch_size(num_gpus=num_gpus, on_apple_silicon=_is_apple_silicon())
-    #Inline replacement for config.suggest_batch_size()
+    # ---- Inline replacement for config.suggest_batch_size() ----
     if num_gpus >= 1:
-    #GPU detected → bigger batch
+        # GPU detected → bigger batch
         if _is_apple_silicon():
             bs = 64     # good default for Apple Metal GPU
-      	else:
+        else:
             bs = 128    # typical CUDA/ROCm GPU
-	else:
-    # CPU only → balanced at ~75% of logical cores
+    else:
+        # CPU only → balanced at ~75% of logical cores
         logical = os.cpu_count() or 8
         bs = max(8, min(32, (int(logical * 0.75) // 2) * 2))  # even number 8–32
-        print(f"[train] Auto batch size set to: {bs}")
-      
-        os.environ["FRUITS360_BATCH_SIZE"] = str(bs)
-        # Keep config aliases in sync so data.load_train_val() sees it
-        config.BATCH_SIZE = bs
-        config.BATCH = bs
-        # Update dependent defaults that were derived at import time
-        config.SHUFFLE_BUFFER = max(1000, bs * 64)
-        
-    # 4) Mixed precision: enable when any GPU is present (safe for MPS/CUDA)
-    if num_gpus >= 1:
-        mixed_precision.set_global_policy("mixed_float16")
+    # ------------------------------------------------------------
+
+    print(f"[train] Auto batch size set to: {bs}")
+    return bs
 
 
+# ============================================================
+# 4. Main training routine
+# ============================================================
 def main():
-    print("TF:", tf.__version__)
+    # Seed control for reproducibility
+    setup_seed(config.SEED)
 
-    # ---- Auto setup must run BEFORE your existing tune_threads() ----
-    _auto_runtime_setup()
+    # Auto runtime setup (threads, batch size, etc.)
+    batch_size = _auto_runtime_setup()
 
-    # Your original threading/device logic stays intact and now uses the auto defaults
-    utils.tune_threads()
+    # Load datasets
+    train_ds, val_ds, class_names = data.load_train_val(batch_size=batch_size)
 
-    if os.environ.get("FRUITS360_FORCE_CPU", "0") == "1":
-        utils.force_cpu_only()
-        print("Running on CPU (forced via FRUITS360_FORCE_CPU=1)")
-    else:
-        print("GPUs:", tf.config.list_physical_devices("GPU"))
+    # Save class names for inference
+    import json
+    with open(config.CLASS_NAMES_JSON, "w", encoding="utf-8") as f:
+        json.dump(class_names, f, ensure_ascii=False, indent=2)
 
-    # Data
-    train_ds, val_ds, class_names = data.load_train_val()
-    cls_json = config.ARTIFACTS / "class_names.json"
-    cls_json.parent.mkdir(parents=True, exist_ok=True)
-    with open(cls_json, "w") as f:
-        import json
-        json.dump(class_names, f, indent=2)
-    num_classes = len(class_names)
-    print(f"Classes: {num_classes}")
+    # Build model
+    net = model.build_model(
+        input_shape=config.INPUT_SHAPE,
+        num_classes=len(class_names),
+        backbone=config.BACKBONE,
+        pretrained=config.PRETRAINED,
+        dropout=config.DROPOUT,
+        pooling=config.GLOBAL_POOL,
+        freeze=config.FREEZE,
+        frozen_layers=config.FROZEN_LAYERS,
+        classifier_activation=config.CLASSIFIER_ACT,
+    )
 
-    # Model
-    net = mdl.build_model(num_classes)
+    # Compile
+    net.compile(
+        optimizer=tf.keras.optimizers.Adam(learning_rate=config.LEARNING_RATE),
+        loss="categorical_crossentropy",
+        metrics=["accuracy"]
+    )
 
-    # SINGLE CSV logger path (avoid duplicates)
-    primary_csv = Path(getattr(config, "HISTORY_CSV", config.ARTIFACTS / "train_log.csv"))
-    primary_csv.parent.mkdir(parents=True, exist_ok=True)
+    # Prepare callbacks
+    cbs = config.default_callbacks()
 
-    callbacks = [
-        keras.callbacks.ModelCheckpoint(
-            filepath=config.BEST_KERAS,
-            monitor="val_accuracy",
-            mode="max",
-            save_best_only=True,
-            save_weights_only=False,
-            verbose=1,
-        ),
-        keras.callbacks.EarlyStopping(
-            monitor="val_accuracy",
-            mode="max",
-            patience=3,
-            min_delta=1e-4,
-            restore_best_weights=True,
-            verbose=1,
-        ),
-        keras.callbacks.ReduceLROnPlateau(
-            monitor="val_loss",
-            factor=0.5,
-            patience=2,
-            min_lr=1e-6,
-            verbose=1,
-        ),
-        keras.callbacks.CSVLogger(primary_csv.as_posix()),
-    ]
-
-    # Train
-    t0 = time.time()
+    # Fit model
     history = net.fit(
         train_ds,
         validation_data=val_ds,
         epochs=config.EPOCHS,
-        verbose=1,
-        callbacks=callbacks,
-    )
-    t1 = time.time()
-    print(
-        f"Training done in {(t1 - t0)/60:.1f} min; "
-        f"best val_acc={max(history.history['val_accuracy']):.4f}"
+        callbacks=cbs,
+        verbose=config.VERBOSE,
     )
 
-    # Save best model (weights already restored to best by EarlyStopping)
+    # Save final model
     net.save(config.BEST_KERAS)
-    print(f"Saved Keras model -> {config.BEST_KERAS}")
+    print(f"[train] Saved best model → {config.BEST_KERAS}")
 
-    # Optional SavedModel export (ONCE)
-    if getattr(config, "EXPORT_SAVEDMODEL", True):
-        devnull = open(os.devnull, "w")
-        with contextlib.redirect_stdout(devnull), contextlib.redirect_stderr(devnull):
-            net.export(str(config.SAVEDMODEL_DIR))
-        devnull.close()
-        print(f"Exported SavedModel -> {config.SAVEDMODEL_DIR}")
-
-    # Plots
-    _plot_training_curves(history)
-
-    # If another history filename is configured, make it a symlink/copy to avoid duplicate writing
-    _maybe_make_alias(primary_csv)
+    # Plot results
+    try:
+        config.plot_history()
+        print("[plot] Training curves saved")
+    except Exception:
+        pass
 
 
+# ============================================================
+# 5. Entry point
+# ============================================================
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n[train] Interrupted by user.")
+    except Exception as e:
+        import traceback
+        print("[train] Exception occurred:\n", traceback.format_exc())
