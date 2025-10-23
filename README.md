@@ -6,22 +6,32 @@ macOS Sequoia (M1 Max ) with Python 3.11 and GPU (Metal) execution.
 
 ----------
 
-Project Structure
+Project Structure:
 
-    ml/
-    ├──README.md
-    ├──requirements.txt
-    ├──scripts/
-    │  ├──setup_env.sh          ←GPU (Metal) environment setup, can flip to cpu only.
-    │  └──download_data.sh      ←dataset fetch
-    └──src/
-        └──fruits360/
-            ├──config.py
-            ├──model.py
-            ├──train.py
-            ├──utils.py
-            └──plot.py
-            └──...
+fruits360-ml-gpu/
+│
+├── src/fruits360/
+│   ├── __init__.py         ← Marks directory as a Python package
+│   ├── config.py           ← Central configuration (paths, constants, parameters)
+│   ├── data.py             ← Builds tf.data pipeline (load, augment, prefetch, cache)
+│   ├── model.py            ← Defines MobileNetV2 base + classifier head
+│   ├── train.py            ← Main training entrypoint (compile, fit, save best model)
+│   ├── eval.py             ← Post-training evaluation and metrics computation
+│   ├── infer.py            ← Inference script for new or unseen images
+│   ├── plot.py             ← Generates accuracy/loss charts, confusion matrices
+│   └── utils.py            ← Helper utilities (summary, logging, checkpoint paths)
+│
+├── scripts/
+│   ├── setup_env.sh        ← Creates virtual environment & installs dependencies
+│   ├── snapshot_baseline.sh← Generates Git baseline tag with timestamp
+│   └── (optional future scripts) 
+│
+├── artifacts/              ← Stores checkpoints, training history, exported models
+├── requirements.txt         ← Python dependencies list
+├── Makefile                 ← Shortcut commands for setup, train, evaluate, clean
+├── README.md                ← Complete documentation and usage guide
+└── LICENSE                  ← Github Repository license
+
 ----------
 ```
 #Archive Tips
