@@ -120,18 +120,22 @@ VERBOSE             = int(os.environ.get("FRUITS360_VERBOSE", "1"))
 
 # ======================================================================================
 # Threading defaults read by utils.tune_threads()
+# (Updated: choose ~75% of CPU cores by default; env vars still override.)
 # ======================================================================================
 _cpu = os.cpu_count() or 8
 is_mac_arm = (platform.system() == "Darwin" and platform.machine() == "arm64")
 
+def _round75(n: int) -> int:
+    return max(2, int(n * 0.75))
+
 if is_mac_arm:
-    _default_omp   = min(8, _cpu)
+    _default_omp   = min(8, _round75(_cpu))           # keep Metal/MPS light & responsive
     _default_intra = _default_omp
     _default_inter = max(1, _default_omp // 4)
 else:
-    _default_omp   = _cpu
-    _default_intra = _cpu
-    _default_inter = max(1, _cpu // 4)
+    _default_omp   = _round75(_cpu)
+    _default_intra = _round75(_cpu)
+    _default_inter = max(1, _round75(_cpu) // 4)
 
 OMP_THREADS         = int(os.environ.get("FRUITS360_OMP_THREADS", str(_default_omp)))
 TF_INTRAOP_THREADS  = int(os.environ.get("FRUITS360_TF_INTRAOP_THREADS", str(_default_intra)))
@@ -185,6 +189,22 @@ LOG_DIR      = TENSORBOARD_LOGDIR
 CKPT_DIR     = CHECKPOINTS_DIR
 BEST_MODEL   = BEST_KERAS
 SAVEDMODEL   = SAVEDMODEL_DIR
+
+# ======================================================================================
+# Auto-scaling helpers (non-breaking; used by train.py only)
+# ======================================================================================
+def suggest_batch_size(num_gpus: int, on_apple_silicon: bool) -> int:
+    """
+    Heuristic aiming for ~75% device utilization without memory spikes.
+    - Apple Metal: 64 is a safe, fast default for MobileNetV2 heads.
+    - CUDA/ROCm:   128 is moderate; scale later if you like.
+    - CPU-only:    modest batch scaling with cores (cap at 32).
+    """
+    if num_gpus >= 1:
+        return 64 if on_apple_silicon else 128
+    # CPU-only
+    cores = os.cpu_count() or 8
+    return max(8, min(32, int(cores * 0.75 // 2) * 2))  # even number, ≤32
 
 # ======================================================================================
 # Convenience: standard callbacks for training (optional to use)

@@ -1,22 +1,28 @@
+# src/fruits360/train.py
 from __future__ import annotations
+
 import os
 import time
 import contextlib
 from pathlib import Path
+import platform
+
 import matplotlib
 matplotlib.use("Agg")  # headless
 import matplotlib.pyplot as plt
 
 import tensorflow as tf
 from tensorflow import keras
+from tensorflow.keras import mixed_precision
 
 from . import config, utils, data, model as mdl
 
-from fruits360 import utils
-utils.ensure_device(prefer_gpu=True)
+# Keep your existing absolute imports (back-compat)
+from fruits360 import utils as _utils_pkg
+_utils_pkg.ensure_device(prefer_gpu=True)
 
-from fruits360 import config
-print(f"Input size: IMAGE_SIZE={config.IMAGE_SIZE}, INPUT_SHAPE={config.INPUT_SHAPE}")
+from fruits360 import config as _config_pkg
+print(f"Input size: IMAGE_SIZE={_config_pkg.IMAGE_SIZE}, INPUT_SHAPE={_config_pkg.INPUT_SHAPE}")
 
 
 def _plot_training_curves(history: keras.callbacks.History) -> None:
@@ -78,8 +84,59 @@ def _maybe_make_alias(primary_csv: Path) -> None:
             print(f"[log] Could not create alias for log file: {e2}")
 
 
+# -----------------------------
+# Auto-scaling bootstrap
+# -----------------------------
+def _is_apple_silicon() -> bool:
+    return (platform.system() == "Darwin" and platform.machine() == "arm64")
+
+def _auto_runtime_setup() -> None:
+    """
+    Set balanced (~75%) defaults in-code without requiring shell exports:
+      - Threads (OMP/TF intra/inter)
+      - Batch size (based on device)
+      - Mixed precision on GPU
+    Everything remains overridable by existing FRUITS360_* env vars.
+    """
+    # 1) Device presence
+    gpus = tf.config.list_physical_devices("GPU")
+    num_gpus = len(gpus)
+
+    # 2) Threads: respect existing env if set; otherwise choose ~75%
+    if "FRUITS360_TF_INTRAOP_THREADS" not in os.environ or "FRUITS360_TF_INTEROP_THREADS" not in os.environ:
+        cores = os.cpu_count() or 8
+        intra = max(2, int(cores * 0.75))
+        inter = max(1, int(intra / 4))
+        os.environ.setdefault("FRUITS360_TF_INTRAOP_THREADS", str(intra))
+        os.environ.setdefault("FRUITS360_TF_INTEROP_THREADS", str(inter))
+        os.environ.setdefault("FRUITS360_OMP_THREADS",       str(intra))
+        # Keep config module in sync for utils.tune_threads()
+        config.TF_INTRAOP_THREADS = int(os.environ["FRUITS360_TF_INTRAOP_THREADS"])
+        config.TF_INTEROP_THREADS = int(os.environ["FRUITS360_TF_INTEROP_THREADS"])
+        config.OMP_THREADS        = int(os.environ["FRUITS360_OMP_THREADS"])
+
+    # 3) Batch size: respect env; else pick heuristic
+    if "FRUITS360_BATCH_SIZE" not in os.environ:
+        bs = config.suggest_batch_size(num_gpus=num_gpus, on_apple_silicon=_is_apple_silicon())
+        os.environ["FRUITS360_BATCH_SIZE"] = str(bs)
+        # Keep config aliases in sync so data.load_train_val() sees it
+        config.BATCH_SIZE = bs
+        config.BATCH = bs
+        # Update dependent defaults that were derived at import time
+        config.SHUFFLE_BUFFER = max(1000, bs * 64)
+
+    # 4) Mixed precision: enable when any GPU is present (safe for MPS/CUDA)
+    if num_gpus >= 1:
+        mixed_precision.set_global_policy("mixed_float16")
+
+
 def main():
     print("TF:", tf.__version__)
+
+    # ---- Auto setup must run BEFORE your existing tune_threads() ----
+    _auto_runtime_setup()
+
+    # Your original threading/device logic stays intact and now uses the auto defaults
     utils.tune_threads()
 
     if os.environ.get("FRUITS360_FORCE_CPU", "0") == "1":
@@ -90,11 +147,6 @@ def main():
 
     # Data
     train_ds, val_ds, class_names = data.load_train_val()
-    import json
-    from . import config
-#   save class names for inference display.
-#   with open(config.ARTIFACTS / "class_names.json", "w") as f:
-#        json.dump(class_names, f, indent=2)
     cls_json = config.ARTIFACTS / "class_names.json"
     cls_json.parent.mkdir(parents=True, exist_ok=True)
     with open(cls_json, "w") as f:
