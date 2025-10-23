@@ -58,6 +58,8 @@ Optimized for Mac Studio M1 Max (64 GB). One environment only: **GPU (Metal)**.
 ## 1) Setup
 ```bash
 bash scripts/setup_env.sh
+#By defayult, it runs GPU but also automatically fall back to CPU if no GPU detected.
+#Alternatively, execute the following in the project environment.
 export FRUITS360_CPU_ONLY=0 # or export FRUITS360_FORCE_CPU=0  (legacy compatible) ##Run  everything with GPU.
 export FRUITS360_CPU_ONLY=1 # or export FRUITS360_FORCE_CPU=1  (legacy compatible) ##For CPU Run only
 export FRUITS360_BATCH_SIZE=16 ##For CPU Run only, since the Image_Size is 224X224X3, use BATCH_SIZE=16 instead of 64(GPU use) for better  performance.
