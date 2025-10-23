@@ -4,5 +4,7 @@ Version: 2.2.2
 Summary: Fruits-360 trainer (Apple Silicon GPU ready)
 Requires-Python: >=3.11
 Description-Content-Type: text/plain
+License-File: LICENSE
+Dynamic: license-file
 
 Fruits-360 training utilities

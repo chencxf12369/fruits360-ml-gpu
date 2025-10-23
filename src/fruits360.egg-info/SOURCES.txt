@@ -1,3 +1,4 @@
+LICENSE
 README.md
 pyproject.toml
 src/fruits360/__init__.py
