@@ -1,4 +1,3 @@
-# src/fruits360/data.py
 from __future__ import annotations
 import tensorflow as tf
 from . import config
@@ -34,7 +33,8 @@ def _hw_from_config() -> tuple[int, int]:
 
 def _interpolation():
     """Pick resize interpolation based on config.INTERPOLATION (default bilinear)."""
-    name = str(getattr(config, "INTERPOLATION", "bilinear")).lower()
+    name = str(getattr(config, "INTERPOLATION",
+                       getattr(config, "RESIZE_INTERP", "bilinear"))).lower()
     table = {
         "bilinear": tf.image.ResizeMethod.BILINEAR,
         "bicubic": tf.image.ResizeMethod.BICUBIC,
@@ -45,6 +45,38 @@ def _interpolation():
         "mitchellcubic": tf.image.ResizeMethod.MITCHELLCUBIC,
     }
     return table.get(name, tf.image.ResizeMethod.BILINEAR)
+
+
+def _resize_with_pad(img: tf.Tensor, tgt_h: int, tgt_w: int) -> tf.Tensor:
+    """
+    Keep aspect ratio: resize the longer side to target, then pad to (tgt_h, tgt_w).
+    Padding color is black (0.0); change here if another color is desired.
+    """
+    # Ensure float for resize math (input from image_dataset may be float32 in [0,255])
+    img = tf.cast(img, tf.float32)
+
+    h = tf.shape(img)[0]
+    w = tf.shape(img)[1]
+    scale = tf.cast(tgt_h, tf.float32) / tf.cast(tf.maximum(h, w), tf.float32)
+    new_h = tf.cast(tf.round(tf.cast(h, tf.float32) * scale), tf.int32)
+    new_w = tf.cast(tf.round(tf.cast(w, tf.float32) * scale), tf.int32)
+
+    img = tf.image.resize(img, [new_h, new_w], method=_interpolation())
+
+    pad_h = tgt_h - new_h
+    pad_w = tgt_w - new_w
+    pad_top = pad_h // 2
+    pad_bottom = pad_h - pad_top
+    pad_left = pad_w // 2
+    pad_right = pad_w - pad_left
+
+    img = tf.pad(
+        img,
+        paddings=[[pad_top, pad_bottom], [pad_left, pad_right], [0, 0]],
+        mode="CONSTANT",
+        constant_values=0.0,
+    )
+    return img
 
 
 def _augment_pipeline():
@@ -62,21 +94,37 @@ def _augment_pipeline():
 def _finalize_pipeline(ds: tf.data.Dataset, training: bool) -> tf.data.Dataset:
     """
     Final touches:
+      - (optional) keep-aspect-ratio + pad to square if config.PAD_TO_SQUARE
       - convert to float32 in [0,1]
       - apply light augmentation for training
       - cache & prefetch
     """
     aug = _augment_pipeline() if training else None
+    H, W = _hw_from_config()
+    use_pad = bool(getattr(config, "PAD_TO_SQUARE", False))
 
-    def _to_float01(x, y):
-        x = tf.image.convert_image_dtype(x, tf.float32)  # [0,1]
+    def _maybe_pad(x, y):
+        # If enabled, letterbox to (H, W) without distortion
+        if use_pad:
+            x = _resize_with_pad(x, H, W)  # returns float32
         return x, y
 
+    def _to_float01(x, y):
+        # Convert to [0,1] regardless of whether we padded (which returns float32)
+        x = tf.image.convert_image_dtype(x, tf.float32)
+        return x, y
+
+    # (Optional) aspect-ratio preserving resize + pad
+    ds = ds.map(_maybe_pad, num_parallel_calls=AUTO)
+
+    # Normalize
     ds = ds.map(_to_float01, num_parallel_calls=AUTO)
 
+    # Augment (training only)
     if training and aug is not None:
         ds = ds.map(lambda x, y: (aug(x, training=True), y), num_parallel_calls=AUTO)
 
+    # Cache & prefetch
     ds = ds.cache()
     ds = ds.prefetch(AUTO)
     return ds
@@ -90,8 +138,9 @@ def load_train_val():
     batch = int(getattr(config, "BATCH", getattr(config, "BATCH_SIZE", 32)))
     seed = int(getattr(config, "SEED", 42))
     val_split = float(getattr(config, "VALIDATION_SPLIT", 0.15))
+    mode = "keep-aspect+pad" if getattr(config, "PAD_TO_SQUARE", False) else "direct-resize"
 
-    print(f"[data] Using image_size={(H, W)} (from config)")
+    print(f"[data] Using image_size={(H, W)} ({mode})")
 
     train_raw = tf.keras.utils.image_dataset_from_directory(
         config.TRAIN_DIR,
@@ -100,7 +149,7 @@ def load_train_val():
         validation_split=val_split,
         subset="training",
         seed=seed,
-        image_size=(H, W),  # Keras resizes here
+        image_size=(H, W),  # Keras resizes here; we may re-letterbox later if PAD_TO_SQUARE=True
         batch_size=batch,
         shuffle=True,
     )
@@ -108,7 +157,7 @@ def load_train_val():
     val_raw = tf.keras.utils.image_dataset_from_directory(
         config.TRAIN_DIR,
         labels="inferred",
-        label_mode="categorical",
+        label_mode="categororical" if False else "categorical",
         validation_split=val_split,
         subset="validation",
         seed=seed,
@@ -137,8 +186,9 @@ def load_test():
 
     H, W = _hw_from_config()
     batch = int(getattr(config, "BATCH", getattr(config, "BATCH_SIZE", 32)))
+    mode = "keep-aspect+pad" if getattr(config, "PAD_TO_SQUARE", False) else "direct-resize"
 
-    print(f"[data] Using image_size={(H, W)} for TEST")
+    print(f"[data] Using image_size={(H, W)} for TEST ({mode})")
 
     test_raw = tf.keras.utils.image_dataset_from_directory(
         config.TEST_DIR,
