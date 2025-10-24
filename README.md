@@ -67,28 +67,23 @@ Optimized for Mac Studio M1 Max (64 GB). One environment only: **GPU (Metal)**.
 ```bash
 bash scripts/setup_env.sh
 #By defayult, it runs GPU but also automatically fall back to CPU if no GPU detected.
-#Alternatively, execute the following in the project environment.
+#Alternatively, execute the following in the project environment for manual tweak in relation to performance finetune.
 export FRUITS360_CPU_ONLY=0 # or export FRUITS360_FORCE_CPU=0  (legacy compatible) ##Run  everything with GPU.
 export FRUITS360_CPU_ONLY=1 # or export FRUITS360_FORCE_CPU=1  (legacy compatible) ##For CPU Run only
 
-Other variables for performance finetune:
+Other Variable Options:
     export FRUITS360_BATCH_SIZE=8 ##For CPU Run only, since the Image_Size is 224X224X3, use BATCH_SIZE=16 instead of 64(GPU use) for better  performance.
     export FRUITS360_OMP_THREADS=8
     export FRUITS360_TF_INTRAOP_THREADS=8
     export FRUITS360_TF_INTEROP_THREADS=2
-
     # smaller per-step memory
     export FRUITS360_BATCH_SIZE=8
-
     #shrink shuffle buffer (defaults to BATCH*64 which can be big)
     export FRUITS360_SHUFFLE_BUFFER=2048
-
     # (optional) if you suspect oneDNN kernel variants chewing RAM/threads
     export TF_ENABLE_ONEDNN_OPTS=0
-    
     # Disable CACHE prefetch for memory exhausting issue, works with TF_ENABLE_ONEDNN_OPTS=1 
     export FRUITS360_CACHE=0
-
     #run with lower OS priority so the desktop stays responsive
     nice -n 10 python -m fruits360.train
 ```
@@ -188,13 +183,37 @@ Reproduce env: make freeze then reinstall with pip install -r requirements.lock.
 
 ## 7) Troubleshooting
 ```bash
-  --------------------------------------------------- ---------------------------------------------------------------------------------
-  Symptom                                             Cause / Fix
-  ModuleNotFoundError: No module named 'tensorflow'   Ensure you’e inside the correct venv (which python) and installed requirements.
-  Metal device not found                              Run native arm64 Terminal and reinstall GPU env.
-  Slow training on M1/M2                              Confirm you’e using legacy.Adam optimizer (already fixed in model.py).
-  Logs mix between runs                               Each venv has its own artifact root (artifacts-cpu vs artifacts-gpu).
-  --------------------------------------------------- ---------------------------------------------------------------------------------
+--------------------------------------------------- ---------------------------------------------------------------------------------
+Symptom / Error Message
+Cause / Fix
+ModuleNotFoundError: No module named 'tensorflow'
+Not installed in current venv → Activate correct environment (which python) and run pip install -r requirements.txt.
+Metal device not found
+macOS using Intel/x86 Terminal → Open arm64 Terminal and reinstall GPU stack: brew reinstall tensorflow-macos tensorflow-metal.
+Training extremely slow on M1/M2
+Using new optimizer (Keras 3.x) instead of legacy one → In model.py, ensure: optimizer = tf.keras.optimizers.legacy.Adam().
+IndentationError: unindent does not match any outer indentation level
+Misaligned spaces/tabs after code edits → Align exactly 4 spaces or run expand -t 4 src/fruits360/train.py > tmp && mv tmp src/fruits360/train.py.
+UnboundLocalError: cannot access local variable 'os'
+Local import os, time inside function shadows global import → Remove local import os, keep only import time.
+No best.keras found (but file exists)
+Filesystem async write delay → Added fsync() + short delay patch; re-run if still missing.
+Memory gradually hits 100% on Ubuntu
+Dataset cached/prefetch fills RAM → export FRUITS360_CACHE=0, reduce shuffle buffer FRUITS360_SHUFFLE_BUFFER=2048, monitor with htop.
+GPU/CPU thread oversubscription
+TF thread vars too high → Auto-tuned (OMP=7, INTRA=7, INTER=2). Override manually if needed.
+No class_names.json produced
+Early version skipped saving → Re-added in train.py to write into artifacts/class_names.json.
+Validation stops early (≈12 epochs)
+EarlyStopping triggered (val_accuracy plateau) → Increase patience or lower learning rate.
+Shape must be rank 3 but is rank 4 (padding)
+tf.pad applied post-batching → Move padding before batching in data.py.
+Module fruits360 not found
+Package not installed editable-mode → Run pip install -e . from project root.
+Logs mixed between CPU/GPU runs
+Both write to artifacts/ root → Use separate dirs (artifacts-cpu, artifacts-gpu).
+
+--------------------------------------------------- ---------------------------------------------------------------------------------
 ```
 
 
