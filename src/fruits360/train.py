@@ -181,7 +181,7 @@ def main():
     print(f"[train] Saved best model → {config.BEST_KERAS}")
 
     # --- ensure the .keras file is fully written and visible ---
-    import  time
+    import time
     best_path = str(config.BEST_KERAS)
     if os.path.exists(best_path):
         try:
@@ -205,7 +205,7 @@ def main():
     try:
         from . import eval as eval_module
         print("[train] Running post-training evaluation...")
-        eval_module.main(model_path=config.BEST_KERAS, save_json=True)
+        eval_module.main()
     except Exception as e:
         print(f"[train] Skipped auto-evaluation due to: {e}")
     

@@ -14,8 +14,7 @@ import tensorflow as tf
 from tensorflow import keras
 from sklearn.metrics import confusion_matrix
 
-from . import config, utils, data
-from fruits360 import utils
+from . import config, data, utils  # keep the package-local utils
 utils.ensure_device(prefer_gpu=True)
 
 # Try to import registered preprocess for Keras deserialization
