@@ -9,9 +9,24 @@ from . import config
 # ---- keep preprocess deserializable for .keras files ----
 @register_keras_serializable(package="fruits360", name="mobilenetv2_preprocess")
 def mobilenetv2_preprocess(x):
-    # defer import to avoid hard dependency at import time
+    """Serializable preprocess function for MobileNetV2 (dataset scaled [0,1])."""
     from keras.applications.mobilenet_v2 import preprocess_input
+    x = x * 255.0  # re-scale back to [0,255]
     return preprocess_input(x)
+
+#same practise for ResNet50 and EfficientNetB0
+@register_keras_serializable(package="fruits360", name="resnet50_preprocess")
+def resnet50_preprocess(x):
+    from keras.applications.resnet50 import preprocess_input
+    x = x * 255.0
+    return preprocess_input(x)
+
+@register_keras_serializable(package="fruits360", name="efficientnetb0_preprocess")
+def efficientnetb0_preprocess(x):
+    from keras.applications.efficientnet import preprocess_input
+    x = x * 255.0
+    return preprocess_input(x)
+
 
 # -----------------------------------------------------------------------------
 # Small custom CNN (unchanged)
@@ -141,7 +156,7 @@ def _build_resnet50(num_classes: int) -> models.Model:
     x = layers.RandomRotation(0.05)(x)
     x = layers.RandomZoom(0.10)(x)
     x = layers.RandomContrast(0.10)(x)
-    x = layers.Lambda(mobilenetv2_preprocess, name="preprocess_mobilenetv2")(x)
+    x = layers.Lambda(mobilenetv2_preprocess, name="preprocess_resnet50")(x)
     x = base(x)
     if getattr(config, "GLOBAL_POOL", "avg") not in {"avg", "max"}:
         x = layers.GlobalAveragePooling2D()(x)
@@ -170,7 +185,7 @@ def _build_efficientnetb0(num_classes: int) -> models.Model:
     x = layers.RandomZoom(0.10)(x)
     x = layers.RandomContrast(0.10)(x)
     # EfficientNet expects its own preprocessing, but MobileNetV2's is fine for 0-centered RGB here.
-    x = layers.Lambda(mobilenetv2_preprocess, name="preprocess_mobilenetv2")(x)
+    x = layers.Lambda(mobilenetv2_preprocess, name="preprocess_efficientnetb0")(x)
     x = base(x)
     if getattr(config, "GLOBAL_POOL", "avg") not in {"avg", "max"}:
         x = layers.GlobalAveragePooling2D()(x)

@@ -62,8 +62,8 @@ def _resize_with_pad(img: tf.Tensor, tgt_h: int, tgt_w: int) -> tf.Tensor:
     return img
 
 def _augment_pipeline():
-    """Light augmentation pipeline – gated by config.USE_AUGMENTATION."""
-    if not getattr(config, "USE_AUGMENTATION", True):
+    """Light augmentation pipeline – only if AUG_IN_DATA=True."""
+    if not getattr(config, "AUG_IN_DATA", False):
         return None
     layers = [
         tf.keras.layers.RandomFlip("horizontal"),

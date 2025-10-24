@@ -12,6 +12,13 @@ import subprocess
 import sys
 from datetime import datetime
 
+#------------------------------------------
+# where to apply augmentation
+#-------------------------------------------
+AUG_IN_MODEL = bool(int(os.environ.get("FRUITS360_AUG_IN_MODEL", "1")))  # default: model
+AUG_IN_DATA  = bool(int(os.environ.get("FRUITS360_AUG_IN_DATA",  "0")))  # default: off
+
+
 # ------------------------------------------------------------
 # Plotting (file-only backend; safe on servers/CI)
 # ------------------------------------------------------------

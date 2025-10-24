@@ -179,18 +179,39 @@ def main():
     # Save final/best model
     net.save(config.BEST_KERAS)
     print(f"[train] Saved best model → {config.BEST_KERAS}")
-  
-    # After saving best model
+
+    # --- ensure the .keras file is fully written and visible ---
+    import  time
+    best_path = str(config.BEST_KERAS)
+    if os.path.exists(best_path):
+        try:
+            # force flush-to-disk on filesystems that delay writes
+            with open(best_path, "ab") as f:
+                f.flush()
+                os.fsync(f.fileno())
+            print(f"[train] Verified & fsync'd best model: {best_path}")
+        except Exception as e:
+            print(f"[train] Warning: fsync failed ({e})")
+    else:
+        # if the save is slightly asynchronous, give it a short window
+        print("[train] Best model not visible yet; waiting 2s...")
+        time.sleep(2)
+        if os.path.exists(best_path):
+            print(f"[train] Found best model after delay: {best_path}")
+        else:
+            print(f"[train] Error: best model still missing after delay.")
+
+    # Run post-training evaluation (uses absolute path)
     try:
         from . import eval as eval_module
         print("[train] Running post-training evaluation...")
-        eval_module.main(model_path=BEST_KERAS, save_json=True)
+        eval_module.main(model_path=config.BEST_KERAS, save_json=True)
     except Exception as e:
         print(f"[train] Skipped auto-evaluation due to: {e}")
- 
+    
     # Report best metric
-    best_val_acc = max(history.history.get("val_accuracy", [0]))
-    best_epoch = history.history["val_accuracy"].index(best_val_acc) + 1
+    best_val_acc = max(history.history.get("val_accuracy", [0.0]))
+    best_epoch = history.history.get("val_accuracy", [0.0]).index(best_val_acc) + 1
     print(f"[train] Best validation accuracy: {best_val_acc:.4f} (epoch {best_epoch})")
 
     # Plots
@@ -199,7 +220,6 @@ def main():
         print("[plot] Training curves saved")
     except Exception:
         pass
-
 
 # ============================================================
 # 4) Entry point
