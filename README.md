@@ -46,6 +46,8 @@ tar -czf ml-gpu.tar.gz \
 
 
 ## 0) Prerequisites
+```
+Ignore this if it's not Mac OS environment.
 
   ------------------------------- -------------- --------------------------
   Component                       Version        Install Hint
@@ -54,14 +56,7 @@ tar -czf ml-gpu.tar.gz \
   Git (optional)                  latest         brew install git
   Command Line Tools              –              xcode-select --install
   ------------------------------- -------------- --------------------------
-
-----------
-Environment Setup
-Optimized for Mac Studio M1 Max (64 GB). One environment only: **GPU (Metal)**.
-- Mixed precision enabled
-- MobileNetV2 @ 224 with BN frozen + tail fine-tuning
-- Hardcoded thread counts (P-cores): OMP/INTRA=8, INTER=2
-- Fast tf.data (cache/shuffle/prefetch)
+```
 ----------
 ## 1) Setup
 ```bash
