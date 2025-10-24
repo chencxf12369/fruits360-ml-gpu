@@ -74,14 +74,6 @@ def _augment_pipeline():
 
 
 def _finalize_pipeline(ds: tf.data.Dataset, training: bool) -> tf.data.Dataset:
-    """
-    Final touches:
-      - (optional) keep-aspect-ratio + pad to square if config.PAD_TO_SQUARE
-      - convert to float32 in [0,1]
-      - apply light augmentation for training
-      - cache & prefetch
-    """
-    aug = _augment_pipeline() if training else None
     H, W = _hw_from_config()
     use_pad = bool(getattr(config, "PAD_TO_SQUARE", False))
 
@@ -101,15 +93,17 @@ def _finalize_pipeline(ds: tf.data.Dataset, training: bool) -> tf.data.Dataset:
 
     # Normalize
     ds = ds.map(_to_float01, num_parallel_calls=AUTO)
+    
+    ds = ds.cache()
+    if training:
+        ds = ds.shuffle(1000, reshuffle_each_iteration=True)
 
-    # Augment (training only)
-    if training and aug is not None:
+    if aug is not None:
         ds = ds.map(lambda x, y: (aug(x, training=True), y), num_parallel_calls=AUTO)
 
-    # Cache & prefetch
-    ds = ds.cache()
     ds = ds.prefetch(AUTO)
     return ds
+
 
 # ---------------------------------------------------------------------
 # public loaders
