@@ -5,6 +5,8 @@ macOS Sequoia (M1 Max ) with Python 3.11 and GPU (Metal) execution.
 
 ----------
 ## 📁 Project Structure
+----------
+```
 fruits360-ml-gpu/
 │
 ├── src/fruits360/
@@ -30,7 +32,6 @@ fruits360-ml-gpu/
 ├── Makefile                  ← Shortcut commands: setup, train, eval, plot, clean
 ├── README.md                 ← Full documentation and usage guide
 └── LICENSE                   ← Repository license
-
 ```
 
 ----------
