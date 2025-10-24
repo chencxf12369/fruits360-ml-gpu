@@ -32,10 +32,7 @@ fruits360-ml-gpu/
 ├── Makefile                  ← Shortcut commands: setup, train, eval, plot, clean
 ├── README.md                 ← Full documentation and usage guide
 └── LICENSE                   ← Repository license
-```
 
-----------
-```
 #Archive Tips
 zip -r ml-gpu.zip ml-gpu -x 'ml-gpu/.venv/*' 'ml-gpu/artifacts-*' 'ml-gpu/src/fruits360/__pycache*' 'ml-gpu/src/fruits360.egg*'
 tar -czf ml-gpu.tar.gz \
@@ -58,7 +55,6 @@ tar -czf ml-gpu.tar.gz \
   Command Line Tools              –              xcode-select --install
   ------------------------------- -------------- --------------------------
 
-
 ----------
 Environment Setup
 Optimized for Mac Studio M1 Max (64 GB). One environment only: **GPU (Metal)**.
@@ -66,7 +62,7 @@ Optimized for Mac Studio M1 Max (64 GB). One environment only: **GPU (Metal)**.
 - MobileNetV2 @ 224 with BN frozen + tail fine-tuning
 - Hardcoded thread counts (P-cores): OMP/INTRA=8, INTER=2
 - Fast tf.data (cache/shuffle/prefetch)
-
+----------
 ## 1) Setup
 ```bash
 bash scripts/setup_env.sh
@@ -82,22 +78,23 @@ Other variables for performance finetune:
     export FRUITS360_TF_INTEROP_THREADS=2
 
     # smaller per-step memory
-    export FRUITS360_BATCH_SIZE=16
+    export FRUITS360_BATCH_SIZE=8
 
     #shrink shuffle buffer (defaults to BATCH*64 which can be big)
     export FRUITS360_SHUFFLE_BUFFER=2048
 
     # (optional) if you suspect oneDNN kernel variants chewing RAM/threads
-    # export TF_ENABLE_ONEDNN_OPTS=0
+    export TF_ENABLE_ONEDNN_OPTS=0
     
     # Disable CACHE prefetch for memory exhausting issue, works with TF_ENABLE_ONEDNN_OPTS=1 
-    #export FRUITS360_CACHE=0
+    export FRUITS360_CACHE=0
 
     #run with lower OS priority so the desktop stays responsive
     nice -n 10 python -m fruits360.train
+```
 
-
-##2) Download the Dataset
+## 2) Download the Dataset
+```
 Use script (or manual copy):
 bash scripts/download_data.sh
 
@@ -141,12 +138,12 @@ fruits360_savedmodel/
 train_log.csv
 ```
 
-## 3) Evaluate on official Test split
+## 4) Evaluate on official Test split
 ```bash
 python -m fruits360.eval
 
 ```
-## 4) Inference
+## 5) Inference
 ```bash
 python -m fruits360.infer --image "$HOME/data/Fruit-Images-Dataset/Test/Apple Golden 2/321_100.jpg"
 
@@ -161,7 +158,7 @@ Reproduce env: make freeze then reinstall with pip install -r requirements.lock.
 
 
 ```
-## 5) Summary of Workflow
+## 6) Summary of Workflow
 ```bash
 
     # 1.  Create and initialize environment
@@ -189,9 +186,7 @@ Reproduce env: make freeze then reinstall with pip install -r requirements.lock.
 
 ```
 
-
-
-## 6) Troubleshooting
+## 7) Troubleshooting
 ```bash
   --------------------------------------------------- ---------------------------------------------------------------------------------
   Symptom                                             Cause / Fix
@@ -203,7 +198,7 @@ Reproduce env: make freeze then reinstall with pip install -r requirements.lock.
 ```
 
 
-## 7) Revision History:
+## 8) Revision History:
 ```bash
 #Revision:
 #0.0.1 Raw script for basic scripts to run TensorFlow  with cpu only.
@@ -225,19 +220,19 @@ Reproduce env: make freeze then reinstall with pip install -r requirements.lock.
 #2.2.4 Restore padding in agumentation.
 ```
 
-## 8) References
+## 9) References
 ```bash
 • TensorFlow Metal Plugin Guide
 • Keras API Docs
 • Fruits 360 Dataset (Kaggle)
 ```
-## 9)Git backup with Tag creation and push to Github.
+## 10)Git backup with Tag creation and push to Github.
 ```bash
 bash scripts/snapshot_baseline.sh
 git push origin main --tags
 git status
 ```
-## 10) Restore or clone from GitHub
+## 11) Restore or clone from GitHub
 ```bash
 git clone https://github.com/<you>/fruits360-ml-gpu.git
 cd fruits360-ml-gpu
