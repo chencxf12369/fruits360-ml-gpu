@@ -1,11 +1,10 @@
-
-
+###
 A TensorFlow / Keras image-classification project for fruit detection,
 fully tested on
 macOS Sequoia (M1 Max ) with Python 3.11 and GPU (Metal) execution.
 
 ----------
-# 📁 Project Structure
+## 📁 Project Structure
 fruits360-ml-gpu/
 │
 ├── src/fruits360/
@@ -32,7 +31,7 @@ fruits360-ml-gpu/
 ├── README.md                 ← Full documentation and usage guide
 └── LICENSE                   ← Repository license
 
-
+```
 
 ----------
 ```
@@ -48,7 +47,7 @@ tar -czf ml-gpu.tar.gz \
 ----------
 
 
-0. Prerequisites
+## 0) Prerequisites
 
   ------------------------------- -------------- --------------------------
   Component                       Version        Install Hint
