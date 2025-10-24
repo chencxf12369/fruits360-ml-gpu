@@ -184,35 +184,54 @@ Reproduce env: make freeze then reinstall with pip install -r requirements.lock.
 ## 7) Troubleshooting
 ```bash
 --------------------------------------------------- ---------------------------------------------------------------------------------
-Symptom / Error Message
-Cause / Fix
-ModuleNotFoundError: No module named 'tensorflow'
-Not installed in current venv → Activate correct environment (which python) and run pip install -r requirements.txt.
-Metal device not found
-macOS using Intel/x86 Terminal → Open arm64 Terminal and reinstall GPU stack: brew reinstall tensorflow-macos tensorflow-metal.
-Training extremely slow on M1/M2
-Using new optimizer (Keras 3.x) instead of legacy one → In model.py, ensure: optimizer = tf.keras.optimizers.legacy.Adam().
-IndentationError: unindent does not match any outer indentation level
-Misaligned spaces/tabs after code edits → Align exactly 4 spaces or run expand -t 4 src/fruits360/train.py > tmp && mv tmp src/fruits360/train.py.
-UnboundLocalError: cannot access local variable 'os'
-Local import os, time inside function shadows global import → Remove local import os, keep only import time.
-No best.keras found (but file exists)
-Filesystem async write delay → Added fsync() + short delay patch; re-run if still missing.
-Memory gradually hits 100% on Ubuntu
-Dataset cached/prefetch fills RAM → export FRUITS360_CACHE=0, reduce shuffle buffer FRUITS360_SHUFFLE_BUFFER=2048, monitor with htop.
-GPU/CPU thread oversubscription
-TF thread vars too high → Auto-tuned (OMP=7, INTRA=7, INTER=2). Override manually if needed.
-No class_names.json produced
-Early version skipped saving → Re-added in train.py to write into artifacts/class_names.json.
-Validation stops early (≈12 epochs)
-EarlyStopping triggered (val_accuracy plateau) → Increase patience or lower learning rate.
-Shape must be rank 3 but is rank 4 (padding)
-tf.pad applied post-batching → Move padding before batching in data.py.
-Module fruits360 not found
-Package not installed editable-mode → Run pip install -e . from project root.
-Logs mixed between CPU/GPU runs
-Both write to artifacts/ root → Use separate dirs (artifacts-cpu, artifacts-gpu).
+Symptom / Error Message                               Cause / Fix
+----------------------------------------------------------------------------------------------
+ModuleNotFoundError: No module named 'tensorflow'      Not installed in current venv.
+                                                       Activate correct environment (which python)
+                                                       and run pip install -r requirements.txt.
 
+Metal device not found                                 Running Intel/x86 Terminal on macOS.
+                                                       Open native arm64 Terminal and reinstall:
+                                                       brew reinstall tensorflow-macos tensorflow-metal
+
+Training extremely slow on M1/M2                       Using new Keras optimizer.
+                                                       In model.py, use:
+                                                       tf.keras.optimizers.legacy.Adam()
+
+IndentationError: unindent does not match any outer
+indentation level                                     Mixed tabs/spaces after code edits.
+                                                       Align with 4 spaces or run:
+                                                       expand -t 4 src/fruits360/train.py > tmp && mv tmp src/fruits360/train.py
+
+UnboundLocalError: cannot access local variable 'os'   Local import shadows global import.
+                                                       Remove local import os, keep only import time.
+
+No best.keras found (but file exists)                  Filesystem async write delay.
+                                                       Add fsync() or rerun (already patched).
+
+Memory hits 100% on Ubuntu                             Dataset cache/prefetch fills RAM.
+                                                       export FRUITS360_CACHE=0
+                                                       export FRUITS360_SHUFFLE_BUFFER=2048
+                                                       Monitor with htop.
+
+GPU/CPU threads oversubscribed                         Too many TensorFlow threads.
+                                                       Auto tuned: OMP=7, INTRA=7, INTER=2
+                                                       Can override manually if needed.
+
+No class_names.json produced                           Older version skipped saving.
+                                                       Fixed: now written in train.py to artifacts/class_names.json.
+
+Validation stops early (≈12 epochs)                    EarlyStopping triggered (no improvement).
+                                                       Increase patience or lower learning rate.
+
+Shape must be rank 3 but is rank 4                     tf.pad applied after batching.
+                                                       Move padding before batching in data.py.
+
+Module fruits360 not found                             Package not installed in editable mode.
+                                                       Run pip install -e . from project root.
+
+Logs mixed between CPU/GPU runs                        Both write to same artifact root.
+                                                       Use separate folders: artifacts-cpu, artifacts-gpu.
 --------------------------------------------------- ---------------------------------------------------------------------------------
 ```
 
