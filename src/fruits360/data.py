@@ -76,7 +76,9 @@ def _augment_pipeline():
 def _finalize_pipeline(ds: tf.data.Dataset, training: bool) -> tf.data.Dataset:
     H, W = _hw_from_config()
     use_pad = bool(getattr(config, "PAD_TO_SQUARE", False))
-
+    #define aug in local scope
+    aug = _augment_pipeline() if (training and getattr(config, "AUG_IN_DATA", False)) else None
+    
     def _maybe_pad(x, y):
         # If enabled, letterbox to (H, W) without distortion
         if use_pad:
@@ -133,7 +135,7 @@ def load_train_val():
     val_raw = tf.keras.utils.image_dataset_from_directory(
         config.TRAIN_DIR,
         labels="inferred",
-        label_mode="categororical" if False else "categorical",
+        label_mode="categorical" if False else "categorical",
         validation_split=val_split,
         subset="validation",
         seed=seed,
