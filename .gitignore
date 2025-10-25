@@ -15,7 +15,7 @@ artifacts/*.keras
 artifacts/*savedmodel*/
 artifacts/*.png
 artifacts/eval_meqq!uuuuuuuuuuuuuuuuuuTRICS.JSONu
-
+artifacts/TEST_*
 artifacts/train_history.csv
 artifacts/checkpoints/
 
