@@ -17,7 +17,11 @@ from datetime import datetime
 #-------------------------------------------
 AUG_IN_MODEL = bool(int(os.environ.get("FRUITS360_AUG_IN_MODEL", "1")))  # default: model
 AUG_IN_DATA  = bool(int(os.environ.get("FRUITS360_AUG_IN_DATA",  "0")))  # default: off
-
+# Data loading & performance tuning
+# 1 = deterministic (default, reproducible), 0 = non-deterministic (faster)
+DETERMINISTIC_DATA = os.environ.get("FRUITS360_DETERMINISTIC_DATA", "0") == "1"
+#LABEL SMOOTHING
+LABEL_SMOOTHING = float(os.environ.get("FRUITS360_LABEL_SMOOTHING", "0.1"))
 
 # ------------------------------------------------------------
 # Plotting (file-only backend; safe on servers/CI)
@@ -142,7 +146,7 @@ SHUFFLE_BUFFER   = int(os.environ.get("FRUITS360_SHUFFLE_BUFFER", str(max(1000, 
 PREFETCH_AUTO    = os.environ.get("FRUITS360_PREFETCH_AUTO", "1") == "1"
 
 # Optional square padding for real-world photos/screenshots
-PAD_TO_SQUARE = os.environ.get("FRUITS360_PAD_TO_SQUARE", "0") == "1"
+PAD_TO_SQUARE = os.environ.get("FRUITS360_PAD_TO_SQUARE", "1") == "1"
 PAD_COLOR     = tuple(int(x) for x in os.environ.get("FRUITS360_PAD_COLOR", "0,0,0").split(","))
 RESIZE_INTERP = os.environ.get("FRUITS360_RESIZE_INTERP", "bilinear")  # bilinear|bicubic|nearest
 

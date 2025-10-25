@@ -12,10 +12,10 @@ import multiprocessing
 import platform
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"   # suppress INFO/WARNING C++ logs of the following Apple Metal behavior
-```
+'''
 I tensorflow/core/common_runtime/pluggable_device/pluggable_device_factory.cc:305] Could not identify NUMA node of platform GPU ID 0, defaulting to 0. Your kernel may not have been built with NUMA support.
- I tensorflow/core/common_runtime/pluggable_device/pluggable_device_factory.cc:271] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:0 with 0 MB memory) -> physical PluggableDevice (device: 0, name: METAL, pci bus id: <undefined>)
-```
+I tensorflow/core/common_runtime/pluggable_device/pluggable_device_factory.cc:271] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:0 with 0 MB memory) -> physical PluggableDevice (device: 0, name: METAL, pci bus id: <undefined>)
+'''
 # ============================================================
 # 0) Automatic CPU Thread Scaling (~75% utilization)
 #    (set BEFORE importing TensorFlow so TF picks them up)
@@ -174,9 +174,14 @@ def main():
 
     # Build & compile model
     net = _build_model_adaptive(num_classes=len(class_names))
+    # Label smoothing for better generalization to improve accuracy gap between train and eval
+    loss_fn = tf.keras.losses.CategoricalCrossentropy(
+        from_logits=False,
+        label_smoothing=getattr(config, "LABEL_SMOOTHING", 0.1)
+    )
     net.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate=config.LEARNING_RATE),
-        loss="categorical_crossentropy",
+        loss="loss_fn",
         metrics=["accuracy"],
         steps_per_execution=64,   # safe on CPU & GPU; fewer Python callbacks
     )

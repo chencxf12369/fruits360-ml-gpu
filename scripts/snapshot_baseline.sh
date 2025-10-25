@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# --- config ---
+# ---------------------------------------------------------------------
+# Snapshot (baseline) — capture code/env/artifacts and create a git tag
+# ---------------------------------------------------------------------
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ART_DIR="$ROOT_DIR/artifacts"
 TS="$(date +%Y%m%d-%H%M%S)"
@@ -20,27 +22,27 @@ fi
 
 mkdir -p "$ART_DIR"
 
+# 2) Capture pip freeze
 echo "[snap] Capturing pip freeze -> artifacts/requirements.txt"
 python - <<'PY' > artifacts/requirements.txt
 import sys, subprocess
 subprocess.run([sys.executable, "-m", "pip", "freeze"], check=False)
 PY
 
-# 2) Capture fruits360 config summary (so we remember image size, batch, etc.)
+# 3) Capture fruits360 config summary (image size, batch, etc.)
 echo "[snap] Capturing config summary -> artifacts/config-summary.txt"
 python - <<'PY' > artifacts/config-summary.txt
 from fruits360 import config
 print(config.summary())
 PY
 
-# 3) Persist class names (if not already there)
+# 4) Persist class names (TRAIN_DIR ordering preferred)
 echo "[snap] Capturing class names -> artifacts/class_names.json"
 python - <<'PY'
 import json, pathlib
 from fruits360 import config
 p = pathlib.Path(config.ARTIFACTS) / "class_names.json"
 if not p.exists():
-    # prefer TRAIN_DIR ordering
     root = pathlib.Path(config.TRAIN_DIR)
     if root.exists():
         names = sorted([d.name for d in root.iterdir() if d.is_dir()])
@@ -50,21 +52,37 @@ if not p.exists():
 print(str(p))
 PY
 
-# 4) Hash key artifacts for reproducibility
+# 5) Hash key artifacts for reproducibility (SAFE: won't hang if missing/incomplete)
 echo "[snap] Computing SHA256 of key artifacts -> artifacts/hashes_${TS}.txt"
-( cd "$ART_DIR" && \
-  shasum -a 256 \
-    fruits360_best.keras \
-    2>/dev/null || true
-  shasum -a 256 \
-    $(find fruits360_savedmodel -type f 2>/dev/null | sort) \
-    2>/dev/null || true
-) > "$ART_DIR/hashes_${TS}.txt" || true
+HASH_OUT="$ART_DIR/hashes_${TS}.txt"
 
-# 5) Build a manifest with env + paths
+(
+  cd "$ART_DIR"
+
+  # Always try to hash the main Keras model
+  if [[ -f "fruits360_best.keras" ]]; then
+    shasum -a 256 "fruits360_best.keras"
+  else
+    echo "[warn] fruits360_best.keras not found — skipping"
+  fi
+
+  # Hash SavedModel only if it looks complete (has saved_model.pb)
+  if [[ -d "fruits360_savedmodel" && -f "fruits360_savedmodel/saved_model.pb" ]]; then
+    # Use -print0/-0 to handle any odd filenames; ignore dotfiles
+    find "fruits360_savedmodel" -type f -not -path "*/.*" -print0 2>/dev/null \
+      | sort -z \
+      | xargs -0 shasum -a 256 2>/dev/null || true
+  else
+    echo "[snap] Skipping SavedModel (missing or incomplete)"
+  fi
+) > "$HASH_OUT" || true
+
+echo "[snap] Hash summary written to: $HASH_OUT"
+
+# 6) Build a manifest with env + paths
 echo "[snap] Writing manifest -> $MANIFEST"
 python - <<PY
-import json, os, platform, pathlib, time
+import json, os, platform, pathlib
 from fruits360 import config
 m = {
   "timestamp": "${TS}",
@@ -88,7 +106,7 @@ path.write_text(json.dumps(m, indent=2))
 print(path)
 PY
 
-# 6) Git commit + tag
+# 7) Git commit & tag
 echo "[snap] Creating git commit & tag"
 git add -A
 git commit -m "Baseline snapshot ${TS}: code+env+artifacts captured" || true

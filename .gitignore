@@ -14,14 +14,11 @@ artifacts/tb_logs/
 artifacts/*.keras
 artifacts/*savedmodel*/
 artifacts/*.png
-artifacts/eval_metrics.json
+artifacts/eval_meqq!uuuuuuuuuuuuuuuuuuTRICS.JSONu
+
 artifacts/train_history.csv
 artifacts/checkpoints/
-artifacts-*
 
 # Datasets (don’t version data)
 Fruit-Images-Dataset/
 data/
-!artifacts/config-summary.txt
-!artifacts/requirements-freeze.txt
-!artifacts/class_names.json

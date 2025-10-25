@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import os, sys, json, argparse
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # quiet TF
 from pathlib import Path
 from typing import List, Optional
+
 
 import numpy as np
 import tensorflow as tf
