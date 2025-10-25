@@ -1,0 +1,27 @@
+PROJECT_ROOT     : /Users/jxufe/Documents/ml-gpu
+DATA_ROOT        : /Users/jxufe/data/Fruit-Images-Dataset
+  TRAIN_DIR      : /Users/jxufe/data/Fruit-Images-Dataset/Training
+  TEST_DIR       : /Users/jxufe/data/Fruit-Images-Dataset/Test
+ARTIFACTS        : /Users/jxufe/Documents/ml-gpu/artifacts
+BEST_KERAS       : /Users/jxufe/Documents/ml-gpu/artifacts/fruits360_best.keras
+SAVEDMODEL_DIR   : /Users/jxufe/Documents/ml-gpu/artifacts/fruits360_savedmodel (export=False)
+HISTORY_CSV      : /Users/jxufe/Documents/ml-gpu/artifacts/train_history.csv
+CHECKPOINTS_DIR  : /Users/jxufe/Documents/ml-gpu/artifacts/checkpoints
+TENSORBOARD_LOGS : /Users/jxufe/Documents/ml-gpu/artifacts/tb_logs
+IMG_SIZE (HxWxC) : 224x224x3
+BATCH_SIZE       : 64   (env FRUITS360_BATCH_SIZE overrides)
+EVAL_BATCH_SIZE  : 64
+EPOCHS           : 30
+USE_AUGMENTATION : True
+VAL_SPLIT        : 0.15
+PAD_TO_SQUARE    : True (color=(0, 0, 0), interp=bilinear)
+RUN_TS           : 20251025-232243
+OMP_THREADS      : 7
+TF_INTRAOP       : 7
+TF_INTEROP       : 2
+BACKBONE         : mobilenetv2
+PRETRAINED       : True
+FREEZE           : True (unfreeze last 0 layers)
+GLOBAL_POOL      : avg
+DROPOUT          : 0.2
+LEARNING_RATE    : 0.001

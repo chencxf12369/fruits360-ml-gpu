@@ -1,0 +1,14 @@
+{
+  "overall_accuracy": 0.023051833568406205,
+  "top_k": 5,
+  "top_k_accuracy": 0.07660437235543019,
+  "num_classes": 131,
+  "num_test_samples": 22688,
+  "test_dir": "/Users/jxufe/data/Fruit-Images-Dataset/Test",
+  "outputs": {
+    "TEST_per_class_csv": "/Users/jxufe/Documents/ml-gpu/artifacts/TEST_per_class_accuracy.csv",
+    "TEST_worst20_png": "/Users/jxufe/Documents/ml-gpu/artifacts/TEST_per_class_accuracy_worst20.png",
+    "TEST_confusion_matrix_png": "/Users/jxufe/Documents/ml-gpu/artifacts/TEST_confusion_matrix.png",
+    "TEST_top_confused_pairs_json": "/Users/jxufe/Documents/ml-gpu/artifacts/TEST_top_confused_pairs.json"
+  }
+}
