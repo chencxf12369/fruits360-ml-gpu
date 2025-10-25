@@ -181,7 +181,7 @@ def main():
     )
     net.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate=config.LEARNING_RATE),
-        loss="loss_fn",
+        loss=loss_fn,
         metrics=["accuracy"],
         steps_per_execution=64,   # safe on CPU & GPU; fewer Python callbacks
     )
