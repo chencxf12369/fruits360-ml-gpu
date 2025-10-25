@@ -137,13 +137,21 @@ def load_train_val():
     C = len(class_names)
 
     # Split deterministically
-    rng = tf.random.Generator.from_seed(seed)
-    idx = tf.range(len(paths), dtype=tf.int32)
-    idx = tf.random.shuffle(idx, seed=rng.make_seeds(2)[0].numpy().tolist())
-    cut = int(len(paths) * (1.0 - val_split))
-    train_idx = idx[:cut].numpy().tolist()
-    val_idx   = idx[cut:].numpy().tolist()
+    # Deterministic permutation using stateless shuffle (seed must be 2-int)
+    n = len(paths)
+    idx = tf.range(n, dtype=tf.int32)
 
+    try:
+        # TensorFlow ≥ 2.17 supports stateless shuffle
+        perm = tf.random.stateless_shuffle(idx, seed=(int(seed), 1337)).numpy()
+    except AttributeError:
+        # Fallback for TF ≤ 2.16 (e.g., macOS Metal)
+        tf.random.set_seed(int(seed))
+        perm = tf.random.shuffle(idx).numpy()
+
+    cut = int(n * (1.0 - val_split))
+    train_idx = perm[:cut].tolist()
+    val_idx   = perm[cut:].tolist()
     paths_tf  = tf.convert_to_tensor(paths)
     labels_tf = tf.convert_to_tensor(labels)
     x_train = tf.gather(paths_tf, train_idx)

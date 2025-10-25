@@ -1,0 +1,2 @@
+ed162c38b70c366465d99369e54c688377dfb49f28312bd032be3d46ddf6f51a  fruits360_best.keras
+[snap] Skipping SavedModel (missing or incomplete)
