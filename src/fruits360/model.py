@@ -28,6 +28,21 @@ def efficientnetb0_preprocess(x):
     return preprocess_input(x)
 
 
+#enable Mixed Precision(auto-float16 on GPU, sage on CPU)
+from tensorflow.keras import mixed_precision
+
+# Enable mixed precision on supported GPUs (safe fallback on CPU)
+try:
+    if tf.config.list_physical_devices("GPU"):
+        mixed_precision.set_global_policy("mixed_float16")
+        print("[policy] Mixed precision enabled (float16 on GPU)")
+    else:
+        mixed_precision.set_global_policy("float32")
+        print("[policy] CPU detected — using float32")
+except Exception as e:
+    print(f"[policy] Mixed precision setup skipped: {e}")
+
+
 # -----------------------------------------------------------------------------
 # Small custom CNN (unchanged)
 # -----------------------------------------------------------------------------
@@ -56,7 +71,7 @@ def _build_custom_cnn(num_classes: int) -> keras.Model:
     x = layers.GlobalAveragePooling2D()(x)
     x = layers.Dense(256, activation="relu")(x)
     x = layers.Dropout(0.2)(x)
-    outputs = layers.Dense(num_classes, activation="softmax")(x)
+    outputs = layers.Dense(num_classes, activation="softmax", dtype="float32")(x)
 
     model = keras.Model(inputs, outputs, name="custom_cnn")
     opt = optimizers.Adam(learning_rate=getattr(config, "LEARNING_RATE", 3e-4))
@@ -123,9 +138,7 @@ def _build_mobilenetv2(num_classes: int) -> models.Model:
     if dr > 0:
         x = layers.Dropout(dr)(x)
 
-    outputs = layers.Dense(
-        num_classes, activation=getattr(config, "CLASSIFIER_ACT", "softmax")
-    )(x)
+    outputs = layers.Dense(num_classes, activation=getattr(config, "CLASSIFIER_ACT", "softmax"), dtype="float32")(x)
 
     model = models.Model(inputs=inputs, outputs=outputs, name="fruits360_mobilenetv2")
 
@@ -162,7 +175,7 @@ def _build_resnet50(num_classes: int) -> models.Model:
         x = layers.GlobalAveragePooling2D()(x)
     if getattr(config, "DROPOUT", 0.2) > 0:
         x = layers.Dropout(getattr(config, "DROPOUT", 0.2))(x)
-    outputs = layers.Dense(num_classes, activation=getattr(config, "CLASSIFIER_ACT", "softmax"))(x)
+    outputs = layers.Dense(num_classes, activation=getattr(config, "CLASSIFIER_ACT", "softmax"), dtype="float32")(x)
     model = models.Model(inputs, outputs, name="fruits360_resnet50")
     opt = optimizers.Adam(learning_rate=getattr(config, "LEARNING_RATE", 1e-3))
     ls = float(getattr(config, "LABEL_SMOOTH", 0.05))
@@ -191,7 +204,7 @@ def _build_efficientnetb0(num_classes: int) -> models.Model:
         x = layers.GlobalAveragePooling2D()(x)
     if getattr(config, "DROPOUT", 0.2) > 0:
         x = layers.Dropout(getattr(config, "DROPOUT", 0.2))(x)
-    outputs = layers.Dense(num_classes, activation=getattr(config, "CLASSIFIER_ACT", "softmax"))(x)
+    outputs = layers.Dense(num_classes, activation=getattr(config, "CLASSIFIER_ACT", "softmax"), dtype="float32")(x)
     model = models.Model(inputs, outputs, name="fruits360_efficientnetb0")
     opt = optimizers.Adam(learning_rate=getattr(config, "LEARNING_RATE", 1e-3))
     ls = float(getattr(config, "LABEL_SMOOTH", 0.05))

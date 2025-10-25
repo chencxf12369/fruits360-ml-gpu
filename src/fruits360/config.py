@@ -142,7 +142,7 @@ SHUFFLE_BUFFER   = int(os.environ.get("FRUITS360_SHUFFLE_BUFFER", str(max(1000, 
 PREFETCH_AUTO    = os.environ.get("FRUITS360_PREFETCH_AUTO", "1") == "1"
 
 # Optional square padding for real-world photos/screenshots
-PAD_TO_SQUARE = os.environ.get("FRUITS360_PAD_TO_SQUARE", "1") == "1"
+PAD_TO_SQUARE = os.environ.get("FRUITS360_PAD_TO_SQUARE", "0") == "1"
 PAD_COLOR     = tuple(int(x) for x in os.environ.get("FRUITS360_PAD_COLOR", "0,0,0").split(","))
 RESIZE_INTERP = os.environ.get("FRUITS360_RESIZE_INTERP", "bilinear")  # bilinear|bicubic|nearest
 

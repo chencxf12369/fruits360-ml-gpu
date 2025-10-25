@@ -11,14 +11,25 @@ import inspect
 import multiprocessing
 import platform
 
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"   # suppress INFO/WARNING C++ logs of the following Apple Metal behavior
+```
+I tensorflow/core/common_runtime/pluggable_device/pluggable_device_factory.cc:305] Could not identify NUMA node of platform GPU ID 0, defaulting to 0. Your kernel may not have been built with NUMA support.
+ I tensorflow/core/common_runtime/pluggable_device/pluggable_device_factory.cc:271] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:0 with 0 MB memory) -> physical PluggableDevice (device: 0, name: METAL, pci bus id: <undefined>)
+```
 # ============================================================
 # 0) Automatic CPU Thread Scaling (~75% utilization)
 #    (set BEFORE importing TensorFlow so TF picks them up)
 # ============================================================
+# base 0.75 or overwrite
 _cpu = multiprocessing.cpu_count()
-_omp = max(1, int(_cpu * 0.75))
+_scale = float(os.environ.get("FRUITS360_THREAD_SCALE", "0.75"))
+_omp   = max(1, int(_cpu * _scale))
 _intra = _omp
 _inter = max(1, _cpu // 4)
+#excplict manual overwrite(if exported)
+_omp   = int(os.environ.get("FRUITS360_OMP_THREADS",   _omp))
+_intra = int(os.environ.get("FRUITS360_TF_INTRAOP_THREADS", _intra))
+_inter = int(os.environ.get("FRUITS360_TF_INTEROP_THREADS", _inter))
 
 os.environ["OMP_NUM_THREADS"] = str(_omp)
 os.environ["TF_NUM_INTRAOP_THREADS"] = str(_intra)
@@ -69,6 +80,11 @@ def _auto_runtime_setup() -> int:
     Configure runtime parameters automatically depending on GPU/CPU environment.
     Returns the chosen batch size.
     """
+    env_bs = os.environ.get("FRUITS360_BATCH_SIZE")
+    if env_bs:
+        bs = int(env_bs)
+        print(f"[train] Batch size overridden by FRUITS360_BATCH_SIZE={bs}")
+        return bs
     num_gpus = len(tf.config.list_physical_devices("GPU"))
     print(f"[Runtime] GPUs visible: {tf.config.list_physical_devices('GPU')}")
     print(f"Input size: IMAGE_SIZE={config.IMAGE_SIZE}, INPUT_SHAPE={config.INPUT_SHAPE}")
@@ -162,6 +178,7 @@ def main():
         optimizer=tf.keras.optimizers.Adam(learning_rate=config.LEARNING_RATE),
         loss="categorical_crossentropy",
         metrics=["accuracy"],
+        steps_per_execution=64,   # safe on CPU & GPU; fewer Python callbacks
     )
 
     # Callbacks
@@ -201,14 +218,6 @@ def main():
         else:
             print(f"[train] Error: best model still missing after delay.")
 
-    # Run post-training evaluation (uses absolute path)
-    try:
-        from . import eval as eval_module
-        print("[train] Running post-training evaluation...")
-        eval_module.main()
-    except Exception as e:
-        print(f"[train] Skipped auto-evaluation due to: {e}")
-    
     # Report best metric
     best_val_acc = max(history.history.get("val_accuracy", [0.0]))
     best_epoch = history.history.get("val_accuracy", [0.0]).index(best_val_acc) + 1

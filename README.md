@@ -81,6 +81,11 @@ Other Variable Options:
     export FRUITS360_CACHE=0
     #run with lower OS priority so the desktop stays responsive
     nice -n 10 python -m fruits360.train
+    #disbale PAD globally for traing, test and eva.
+    export FRUITS360_PAD_TO_SQUARE=0
+    #Temporarily make scalling control to maximum or lower based on the percentage number(1.0=100%,0.5=50%,default is 0.75=75%).
+    FRUITS360_THREAD_SCALE=1.0
+
 ```
 
 ## 2) Download the Dataset
