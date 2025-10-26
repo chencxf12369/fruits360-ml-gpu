@@ -19,3 +19,7 @@ artifacts/checkpoints/
 # Datasets (don’t version data)
 Fruit-Images-Dataset/
 data/
+
+
+#avoid vs code 
+*.code-workspace
