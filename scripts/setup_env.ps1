@@ -140,7 +140,7 @@ New-Item -ItemType Directory -Force -Path $Artifacts, $TbLogs, $Ckpts | Out-Null
 
 # --- detect or prompt for fruits360 dataset --- 
 function Resolve-Fruits360Dataset() {
-  $defaultPath = Join-Path $env:USERPROFILE "data\fruits360"
+  $defaultPath = Join-Path $env:USERPROFILE "data\Fruit-Images-Dataset"
   $datasetPath = $null
 
   Write-Info "Checking for fruits360 dataset..."
