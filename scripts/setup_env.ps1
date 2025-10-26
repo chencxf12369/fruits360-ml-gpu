@@ -145,7 +145,7 @@ try {
 from fruits360 import config
 print(config.summary())
 "@
-  & $PY - <<<$code
+  & $PY -c $code
   Write-OK "Package import check passed."
 } catch {
   Write-Warn "Could not import fruits360 or print summary (this may be okay if paths differ)."
