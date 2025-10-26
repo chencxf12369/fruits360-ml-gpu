@@ -138,6 +138,47 @@ $TbLogs    = Join-Path $Artifacts "tb_logs"
 $Ckpts     = Join-Path $Artifacts "checkpoints"
 New-Item -ItemType Directory -Force -Path $Artifacts, $TbLogs, $Ckpts | Out-Null
 
+# --- detect or prompt for fruits360 dataset --- 
+function Resolve-Fruits360Dataset() {
+  $defaultPath = Join-Path $env:USERPROFILE "data\fruits360"
+  $datasetPath = $null
+
+  Write-Info "Checking for fruits360 dataset..."
+
+  if (Test-Path $defaultPath) {
+    Write-OK "Found dataset at default path: $defaultPath"
+    return $defaultPath
+  }
+
+  Write-Warn "Dataset not found at default path: $defaultPath"
+  $response = Read-Host "Would you like to download the fruits360 dataset to this location? (y/n)"
+  
+  if ($response -eq "y") {
+    $datasetUrl = "https://github.com/Horea94/Fruit-Images-Dataset/archive/master.zip"
+    $zipPath = Join-Path $env:TEMP "fruits360.zip"
+    Write-Info "Downloading dataset from GitHub..."
+    Invoke-WebRequest -Uri $datasetUrl -OutFile $zipPath
+    Write-Info "Extracting dataset..."
+    Expand-Archive -Path $zipPath -DestinationPath (Split-Path $defaultPath -Parent) -Force
+    Rename-Item -Path (Join-Path (Split-Path $defaultPath -Parent) "Fruit-Images-Dataset-master") -NewName "fruits360"
+    Remove-Item $zipPath
+    Write-OK "Dataset downloaded and extracted to: $defaultPath"
+    return $defaultPath
+  } else {
+    $customPath = Read-Host "Enter custom path to fruits360 dataset"
+    if (Test-Path $customPath) {
+      Write-OK "Found dataset at: $customPath"
+      return $customPath
+    } else {
+      Write-Err "Custom path not found. Please download the dataset manually."
+      return $null
+    }
+  }
+}
+
+$Fruits360Path = Resolve-Fruits360Dataset
+
+
 # --- quick sanity check: import package & print a summary if available ---
 try {
   Write-Info "Verifying package import and config summary ..."
