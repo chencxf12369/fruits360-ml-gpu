@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# src/fruits360/train.py
 # -*- coding: utf-8 -*-
 """
 Train script for Fruits360 project — CPU/GPU auto-configured.

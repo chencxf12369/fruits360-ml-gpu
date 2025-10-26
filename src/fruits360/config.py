@@ -1,3 +1,4 @@
+# src/fruits360/config.py
 from __future__ import annotations
 
 # ------------------------------------------------------------

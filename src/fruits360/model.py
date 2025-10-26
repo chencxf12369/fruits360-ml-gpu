@@ -1,3 +1,5 @@
+# src/fruits360/model.py
+from __future__ import annotati
 from __future__ import annotations
 import tensorflow as tf
 from tensorflow import keras
