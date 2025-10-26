@@ -6,7 +6,7 @@ contourpy==1.3.3
 cycler==0.12.1
 flatbuffers==25.9.23
 fonttools==4.60.1
-fruits360==2.2.3
+fruits360==2.2.4
 gast==0.6.0
 google-pasta==0.2.0
 grpcio==1.76.0
