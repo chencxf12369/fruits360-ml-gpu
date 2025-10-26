@@ -34,12 +34,16 @@ fruits360-ml-gpu/
 └── LICENSE                   ← Repository license
 
 #Archive Tips
-zip -r ml-gpu.zip ml-gpu -x 'ml-gpu/.venv/*' 'ml-gpu/artifacts-*' 'ml-gpu/src/fruits360/__pycache*' 'ml-gpu/src/fruits360.egg*'
+zip -r ml-gpu.zip ml-gpu -x 'ml-gpu/.venv/*' 'ml-gpu/artifacts-*' 'ml-gpu/artifacts/fruits360_savedmodel*' 'ml-gpu/artifacts/tb_logs*' 'ml-gpu/artifacts/hashes*' 'ml-gpu/artifacts/baseline*' 'ml-gpu/src/fruits360/__pycache*' 'ml-gpu/src/fruits360.egg*'
 tar -czf ml-gpu.tar.gz \
   --exclude='ml-gpu/.venv' \
   --exclude='ml-gpu/artifacts-*' \
   --exclude='ml-gpu/src/fruits360/__pycache__*' \
   --exclude='ml-gpu/src/fruits360.egg*' \
+  --exclude='ml-gpu/artifacts/fruits360_savedmodel*' \
+  --exclude='ml-gpu/artifacts/tb_logs*' \
+  --exclude='ml-gpu/artifacts/hashes*' \
+  --exclude='ml-gpu/artifacts/baseline*'
   ml-gpu
 ```
 ----------
