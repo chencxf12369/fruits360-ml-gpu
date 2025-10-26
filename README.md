@@ -67,7 +67,7 @@ export FRUITS360_CPU_ONLY=0 # or export FRUITS360_FORCE_CPU=0  (legacy compatibl
 export FRUITS360_CPU_ONLY=1 # or export FRUITS360_FORCE_CPU=1  (legacy compatible) ##For CPU Run only
 
 Other Variable Options:
-    export FRUITS360_BATCH_SIZE=8 ##For CPU Run only, since the Image_Size is 224X224X3, use BATCH_SIZE=16 instead of 64(GPU use) for better  performance.
+    export FRUITS360_BATCH_SIZE=8 ##For CPU Run only, since the Image_Size is 224X224X3, use BATCH_SIZE=8 instead of 64(GPU use) for better  performance.
     export FRUITS360_OMP_THREADS=8
     export FRUITS360_TF_INTRAOP_THREADS=8
     export FRUITS360_TF_INTEROP_THREADS=2

@@ -1,0 +1,72 @@
+[
+  {
+    "true_class_id": 104,
+    "true_class": "104",
+    "pred_class_id": 10,
+    "pred_class": "10",
+    "count": 249
+  },
+  {
+    "true_class_id": 81,
+    "true_class": "81",
+    "pred_class_id": 10,
+    "pred_class": "10",
+    "count": 244
+  },
+  {
+    "true_class_id": 44,
+    "true_class": "44",
+    "pred_class_id": 10,
+    "pred_class": "10",
+    "count": 218
+  },
+  {
+    "true_class_id": 125,
+    "true_class": "125",
+    "pred_class_id": 27,
+    "pred_class": "27",
+    "count": 216
+  },
+  {
+    "true_class_id": 28,
+    "true_class": "28",
+    "pred_class_id": 27,
+    "pred_class": "27",
+    "count": 193
+  },
+  {
+    "true_class_id": 72,
+    "true_class": "72",
+    "pred_class_id": 10,
+    "pred_class": "10",
+    "count": 188
+  },
+  {
+    "true_class_id": 129,
+    "true_class": "129",
+    "pred_class_id": 10,
+    "pred_class": "10",
+    "count": 182
+  },
+  {
+    "true_class_id": 68,
+    "true_class": "68",
+    "pred_class_id": 10,
+    "pred_class": "10",
+    "count": 178
+  },
+  {
+    "true_class_id": 111,
+    "true_class": "111",
+    "pred_class_id": 10,
+    "pred_class": "10",
+    "count": 166
+  },
+  {
+    "true_class_id": 54,
+    "true_class": "54",
+    "pred_class_id": 10,
+    "pred_class": "10",
+    "count": 165
+  }
+]

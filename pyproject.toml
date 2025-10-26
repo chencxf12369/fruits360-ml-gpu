@@ -6,7 +6,7 @@
 
 [project]
 name = "fruits360"
-version = "2.2.3"
+version = "2.2.4"
 description = "Fruit image classification project using TensorFlow/Keras with GPU/CPU auto-detection."
 authors = [
     { name = "Jason Tan", email = "chencxf12369@gmail.com" }
