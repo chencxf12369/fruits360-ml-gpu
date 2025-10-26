@@ -40,6 +40,16 @@ print(f"[Auto Thread Config] Detected {_cpu} cores → OMP={_omp}, INTRA={_intra
 # Now import TF & project modules
 import tensorflow as tf  # noqa: E402
 from fruits360 import data, model, config  # noqa: E402
+# --- Optional: enable mixed precision only on GPU ---
+from tensorflow.keras import mixed_precision
+
+if tf.config.list_physical_devices("GPU"):
+    mixed_precision.set_global_policy("mixed_float16")
+    print("[policy] Mixed precision enabled (float16 on GPU)")
+else:
+    mixed_precision.set_global_policy("float32")
+    print("[policy] CPU only → using float32 (safe default)")
+
 
 # Optional seeding helper (use if available)
 try:

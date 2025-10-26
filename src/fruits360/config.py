@@ -235,7 +235,7 @@ def default_callbacks(monitor: str = "val_accuracy"):
         ModelCheckpoint(str(BEST_KERAS), save_best_only=True, monitor=monitor, mode="max"),
         TensorBoard(log_dir=str(TENSORBOARD_LOGDIR), update_freq="epoch"),
         ReduceLROnPlateau(monitor=monitor, factor=0.5, patience=3, min_lr=1e-6, verbose=1),
-        EarlyStopping(monitor=monitor, patience=8, restore_best_weights=True, verbose=1),
+        EarlyStopping(monitor=monitor, patience=3, restore_best_weights=True, verbose=1),
     ]
 
 
