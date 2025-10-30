@@ -139,7 +139,7 @@ fruits360_savedmodel/
 train_log.csv
 ```
 
-## 4) Evaluate on official Test split
+## 4) Evaluate
 ```bash
 python -m fruits360.eval
 
